@@ -3,6 +3,7 @@ import streamlit_authenticator as stauth
 import bcrypt
 import random
 from collections import Counter
+import streamlit.components.v1 as components # <-- 【追加】
 
 # ページ設定
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="centered")
@@ -39,6 +40,51 @@ except Exception as e:
 name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
+
+# --- JavaScriptのインジェクション ---
+# タップイベントを非表示のチェックボックスクリックに変換するJS
+js_code = """
+<script>
+    function setupDiceClick() {
+        const diceContainers = document.querySelectorAll('.dice-tap-area');
+        diceContainers.forEach(container => {
+            // イベントリスナーが二重に登録されないように既存のものを削除
+            container.removeEventListener('click', handleDiceClick);
+            container.addEventListener('click', handleDiceClick);
+        });
+    }
+
+    function handleDiceClick(event) {
+        event.preventDefault(); // デフォルトの動作を防ぐ
+        event.stopPropagation(); // イベントのバブリングを防ぐ
+
+        const parent = event.currentTarget;
+        const colDiv = parent.closest('.stColumn');
+        
+        if (colDiv) {
+            // st.checkbox のラッパーを探索
+            const checkboxLabel = colDiv.querySelector('[data-testid="stCheckbox"] label');
+            if (checkboxLabel) {
+                // 非表示のチェックボックスのinput要素を取得
+                const checkboxInput = checkboxLabel.querySelector('input[type="checkbox"]');
+                if (checkboxInput) {
+                    // プログラムでクリックイベントを発火させる
+                    checkboxInput.click();
+                }
+            }
+        }
+    }
+
+    // StreamlitがDOMを更新するたびに再セットアップを試みる (重要: st.rerun後も動作させる)
+    new MutationObserver(setupDiceClick).observe(document.body, { childList: true, subtree: true });
+
+    // 初回ロード時
+    setupDiceClick();
+</script>
+"""
+# HTMLとしてStreamlitに埋め込む
+# ログイン状態に関わらず、DOMがロードされたら実行できるように、CSSの下に配置
+components.html(js_code, height=0, width=0)
 
 # --- スマホ最適化CSS ---
 st.markdown("""
@@ -95,7 +141,19 @@ st.markdown("""
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
     margin-bottom: 1rem;
-    max-width: 20%;
+    max-width: 100%;
+}
+
+/* 【修正】タップ領域のコンテナ */
+.dice-tap-area {
+    width: 100%;
+    aspect-ratio: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    display: flex; 
+    justify-content: center;
+    align-items: center;
 }
 
 .dice {
@@ -112,14 +170,10 @@ st.markdown("""
     aspect-ratio: 1;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
-    cursor: pointer;
     user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
-.dice:active {
-    transform: scale(0.95);
-}
+/* 【修正】JSで処理するため:activeは削除 */
 
 .dice-kept {
     background: linear-gradient(145deg, #a5d6a7 0%, #81c784 100%);
@@ -128,9 +182,7 @@ st.markdown("""
     transform: scale(1.05);
 }
 
-.dice-kept:active {
-    transform: scale(1.0);
-}
+/* 【修正】JSで処理するため:activeは削除 */
 
 .dice-label {
     font-size: 0.625rem;
@@ -321,10 +373,19 @@ st.markdown("""
     100% { background-position: 200% 50%; }
 }
 
-/* チェックボックスを非表示 */
-.stCheckbox {
-    display: none !important;
+/* 【修正】チェックボックスを非表示 */
+/* ただし、JSが認識できるように visibility: hidden; に変更（display: noneだとクリックイベントも消えることがあるため） */
+[data-testid="stCheckbox"] {
+    height: 1px !important;
+    width: 1px !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    white-space: nowrap !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+    margin: -1px !important;
 }
+
 
 /* レスポンシブ */
 @media (max-width: 480px) {
@@ -416,6 +477,7 @@ if auth_status:
         check_easter_eggs()
 
     def toggle_keep(index):
+        # この関数は、非表示のチェックボックスがクリックされたときにPython側で状態を反転させるために使用
         st.session_state.keep[index] = not st.session_state.keep[index]
 
     def check_easter_eggs():
@@ -447,8 +509,10 @@ if auth_status:
         if category == "full_house":
             return sum(dice) if sorted(counts.values()) == [2, 3] else 0
         if category == "small_straight":
-            for i in range(2):
-                if sorted_dice[i:i+4] in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
+            # ユニークな値のセットで4連続を確認
+            unique_dice = sorted(list(set(dice)))
+            for straight in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
+                if all(s in unique_dice for s in straight):
                     return 15
             return 0
         if category == "large_straight":
@@ -460,6 +524,7 @@ if auth_status:
     def fill_score(section, category):
         score = calculate_score(category, st.session_state.dice)
         st.session_state.scores[section][category] = score
+        # ターン終了後の初期化
         st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
         st.session_state.rolls_left = 2
         st.session_state.keep = [False]*5
@@ -483,20 +548,25 @@ if auth_status:
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
             label = "✓" if st.session_state.keep[i] else "タップ"
             
-            # タップ可能なサイコロ
+            # 【修正】タップ領域のコンテナを追加し、onclick属性を削除
             st.markdown(f"""
-            <div class='dice {shake_class} {kept_class}' onclick=''>
-                <div>{dice_faces[st.session_state.dice[i]]}</div>
-                <div class='dice-label'>{label}</div>
+            <div class='dice-tap-area'>
+                <div class='dice {shake_class} {kept_class}'>
+                    <div>{dice_faces[st.session_state.dice[i]]}</div>
+                    <div class='dice-label'>{label}</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # 非表示のチェックボックスでキープ状態を管理
+            # 【修正】非表示のチェックボックスでキープ状態を管理 (label_visibilityはcollapsedで続行)
+            # valueを変更したらrerunを呼ぶことで、Python側の状態を更新する
             if st.checkbox("", key=f"keep_{i}", value=st.session_state.keep[i], label_visibility="collapsed"):
+                # チェックボックスがONになった場合
                 if not st.session_state.keep[i]:
                     toggle_keep(i)
                     st.rerun()
             else:
+                # チェックボックスがOFFになった場合
                 if st.session_state.keep[i]:
                     toggle_keep(i)
                     st.rerun()
@@ -619,7 +689,7 @@ if auth_status:
         st.markdown("""
         **基本ルール**
         - 各ターン最大3回振れます
-        - サイコロをタップしてキープ
+        - **サイコロをタップしてキープ**（タップするたびにキープ状態が切り替わります）
         - 12ターンで全カテゴリを埋める
         
         **ボーナス**
@@ -639,4 +709,3 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
-

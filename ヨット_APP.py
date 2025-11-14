@@ -91,10 +91,12 @@ st.markdown("""
 }
 
 .dice-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
     margin-bottom: 1rem;
+    flex-wrap: nowrap;
 }
 
 .dice {
@@ -102,14 +104,22 @@ st.markdown("""
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 1rem 0.5rem;
-    display: block;
-    width: 30%;
-    height: 80%;
+    padding: 0.75rem 0.5rem;
+    width: 18%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
+    user-select: none;
+}
+
+.dice:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 12px rgba(251, 192, 45, 0.4);
 }
 
 .dice-kept {
@@ -117,6 +127,10 @@ st.markdown("""
     border-color: #4caf50;
     box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
     transform: translateY(-2px) scale(1.05);
+}
+
+.dice-kept:hover {
+    transform: translateY(-4px) scale(1.08);
 }
 
 .dice-roll {
@@ -127,6 +141,14 @@ st.markdown("""
     0%, 100% { transform: rotate(0deg); }
     25% { transform: rotate(-10deg); }
     75% { transform: rotate(10deg); }
+}
+
+.keep-instruction {
+    text-align: center;
+    color: #2e7d32;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
 }
 
 /* ボタン */
@@ -248,18 +270,6 @@ st.markdown("""
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
 }
 
-/* チェックボックス */
-.stCheckbox {
-    display: flex;
-    justify-content: center;
-}
-
-.stCheckbox > label {
-    font-size: 0.8125rem;
-    color: #2e7d32 !important;
-    font-weight: 600;
-}
-
 /* サイドバー */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
@@ -298,10 +308,15 @@ st.markdown("""
 }
 
 /* レスポンシブ */
-@media (max-width: 480px) {
+@media (max-width: 640px) {
     .dice {
         font-size: 2.5rem;
-        padding: 0.875rem 0.375rem;
+        padding: 0.5rem 0.25rem;
+        width: 18%;
+    }
+    
+    .dice-grid {
+        gap: 0.4rem;
     }
     
     .game-title {
@@ -311,9 +326,26 @@ st.markdown("""
     .total-score-number {
         font-size: 2.5rem;
     }
+}
+
+@media (max-width: 480px) {
+    .dice {
+        font-size: 2rem;
+        padding: 0.4rem 0.2rem;
+        width: 18%;
+    }
     
     .dice-grid {
-        gap: 0.5rem;
+        gap: 0.3rem;
+        padding: 0 0.25rem;
+    }
+    
+    .game-title {
+        font-size: 1.75rem;
+    }
+    
+    .keep-instruction {
+        font-size: 0.75rem;
     }
 }
 </style>
@@ -366,6 +398,9 @@ if auth_status:
                 st.session_state.shake[i] = False
         st.session_state.rolls_left -= 1
         check_easter_eggs()
+
+    def toggle_keep(index):
+        st.session_state.keep[index] = not st.session_state.keep[index]
 
     def check_easter_eggs():
         dice = st.session_state.dice
@@ -424,13 +459,26 @@ if auth_status:
     # --- サイコロ表示 ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     
+    # キープ指示
+    if st.session_state.rolls_left > 0:
+        st.markdown("<div class='keep-instruction'>📌 サイコロをタップしてキープ</div>", unsafe_allow_html=True)
+    
+    # サイコロを横並びで表示
+    dice_html = "<div class='dice-grid'>"
+    for i in range(5):
+        shake_class = "dice-roll" if st.session_state.shake[i] else ""
+        kept_class = "dice-kept" if st.session_state.keep[i] else ""
+        dice_html += f"<div class='dice {shake_class} {kept_class}' onclick='window.parent.postMessage({{type: \"streamlit:setComponentValue\", key: \"dice_{i}\", value: true}}, \"*\")'>{dice_faces[st.session_state.dice[i]]}</div>"
+    dice_html += "</div>"
+    st.markdown(dice_html, unsafe_allow_html=True)
+    
+    # サイコロのクリックを検出するためのボタン（非表示）
     cols = st.columns(5)
     for i, col in enumerate(cols):
         with col:
-            shake_class = "dice-roll" if st.session_state.shake[i] else ""
-            kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-        
+            if st.button("", key=f"dice_{i}", help=f"サイコロ {i+1} をキープ/解除"):
+                toggle_keep(i)
+                st.rerun()
     
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
@@ -531,7 +579,7 @@ if auth_status:
         st.markdown("""
         **基本ルール**
         - 各ターン最大3回振れます
-        - サイコロを選択してキープ可能
+        - サイコロをタップしてキープ
         - 12ターンで全カテゴリを埋める
         
         **ボーナス**
@@ -551,7 +599,3 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
-
-
-
-

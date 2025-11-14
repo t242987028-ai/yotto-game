@@ -430,8 +430,7 @@ if auth_status:
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
             st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
-            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
+        
     
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
@@ -552,6 +551,7 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+
 
 
 

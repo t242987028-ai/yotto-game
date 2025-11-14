@@ -32,6 +32,7 @@ authenticator = stauth.Authenticate(
 )
 
 try:
+    # ログインウィジェットの呼び出し
     authenticator.login()
 except Exception as e:
     pass
@@ -40,7 +41,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- 明るい緑・白・クリーム色のナチュラルCSS (サイコロ幅 18% 相当の調整) ---
+# --- 明るい緑・白・クリーム色のナチュラルCSS (サイコロ幅 18% 固定) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -51,36 +52,15 @@ st.markdown("""
 
 .stApp {
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
+    /* スマホ対応のため、左右のパディングを詰める */
     padding-left: 0.5rem;
     padding-right: 0.5rem;
 }
 
-/* ヘッダー */
-.game-header {
-    text-align: center;
-    padding: 1.5rem 0.5rem 1rem;
-}
-
-.game-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #2e7d32;
-    margin: 0 0 0.5rem 0;
-    letter-spacing: -0.02em;
-    text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
-}
-
-.player-badge {
-    display: inline-block;
-    padding: 0.5rem 1.25rem;
-    background: #ffffff;
-    border: 2px solid #66bb6a;
-    border-radius: 1.5rem;
-    color: #2e7d32;
-    font-size: 0.875rem;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
-}
+/* ヘッダー, スコアセクションなど、その他のスタイルは維持 */
+.game-header { text-align: center; padding: 1.5rem 0.5rem 1rem; }
+.game-title { font-size: 2.5rem; font-weight: 700; color: #2e7d32; margin: 0 0 0.5rem 0; letter-spacing: -0.02em; text-shadow: 2px 2px 4px rgba(255,255,255,0.5); }
+.player-badge { display: inline-block; padding: 0.5rem 1.25rem; background: #ffffff; border: 2px solid #66bb6a; border-radius: 1.5rem; color: #2e7d32; font-size: 0.875rem; font-weight: 600; box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2); }
 
 /* サイコロエリア */
 .dice-container {
@@ -90,18 +70,15 @@ st.markdown("""
     padding: 1rem 0.5rem;
     margin: 1rem 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
-    /* Streamlitのカラム間の隙間を考慮し、全体をコンパクトに */
-    display: flex;
-    flex-direction: column;
 }
 
 /* 5つのサイコロが並ぶ行（st.columnsの親コンテナ）の調整 */
-/* Streamlitの内部クラスに依存するため、`div[data-testid="stHorizontalBlock"]` を使用して、サイコロを内包するカラム間の隙間を制御 */
+/* カラム間の隙間を詰める（見栄えの調整） */
 div[data-testid="stHorizontalBlock"] {
-    gap: 0.5rem; /* カラム間の隙間を詰める */
+    gap: 0.5rem; 
 }
 
-/* --- サイコロの横幅・縦幅を調整 --- */
+/* --- サイコロの横幅を18%に固定する --- */
 .dice {
     font-size: 2.5rem;
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
@@ -109,14 +86,19 @@ div[data-testid="stHorizontalBlock"] {
     border-radius: 0.5rem;
     padding: 0.3rem 0;
     display: block;
-    /* 18%幅相当にするため、カラムの幅 (約20%) を利用し、余白を増やす */
-    width: 100%; /* カラム幅いっぱいに使う */
+    
+    /* ******** ここが18%の指定 ******** */
+    width: 18%; 
+    /* ********************************* */
+    
     height: auto;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
-    margin: 0 auto; /* 中央寄せ */
+    
+    /* 18%に縮めたサイコロを、20%幅のカラムの中央に配置 */
+    margin: 0 auto; 
 }
 
 .dice-kept {
@@ -193,7 +175,7 @@ div[data-testid="stHorizontalBlock"] {
     }
 }
 
-/* 以下、前回のコードのその他のスタイルを維持 */
+/* その他スタイル */
 .info-badge { text-align: center; padding: 0.75rem; background: #fff3e0; border: 2px solid #ffb74d; border-radius: 0.625rem; color: #e65100; font-weight: 600; font-size: 0.875rem; margin: 1rem 0; }
 .score-section { background: #ffffff; border: 3px solid #81c784; border-radius: 1.25rem; padding: 1rem; margin: 1rem 0; box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15); }
 .section-title { font-size: 1.15rem; font-weight: 700; color: #2e7d32; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 3px solid #a5d6a7; }

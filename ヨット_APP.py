@@ -145,6 +145,7 @@ div[data-testid="column"] > div > div > div > button[kind="secondary"] {
     font-size: 0.75rem !important;
     padding: 0.4rem 0.2rem !important;
     min-height: 35px !important;
+    width: 17%;
     background: #f1f8e9 !important;
     border: 2px solid #c5e1a5 !important;
     color: #2e7d32 !important;
@@ -608,6 +609,7 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+
 
 
 

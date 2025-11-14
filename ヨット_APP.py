@@ -4,7 +4,7 @@ import bcrypt
 import random
 from collections import Counter
 
-# ページ設定: layout="centered" を削除し、レスポンシブを優先するため "wide" に変更
+# ページ設定: レスポンシブを優先
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="wide")
 
 # --- パスワードハッシュ化関数 ---
@@ -40,7 +40,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- 明るい緑・白・クリーム色のナチュラルCSS (スマホ最適化) ---
+# --- 明るい緑・白・クリーム色のナチュラルCSS (サイコロ幅 18% 相当の調整) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -51,7 +51,6 @@ st.markdown("""
 
 .stApp {
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
-    /* 狭い画面でも中央にコンテンツを寄せすぎない */
     padding-left: 0.5rem;
     padding-right: 0.5rem;
 }
@@ -88,25 +87,36 @@ st.markdown("""
     background: #ffffff;
     border: 3px solid #81c784;
     border-radius: 1.25rem;
-    padding: 1rem 0.5rem; /* パディングを小さく */
+    padding: 1rem 0.5rem;
     margin: 1rem 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+    /* Streamlitのカラム間の隙間を考慮し、全体をコンパクトに */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 5つのサイコロが並ぶ行（st.columnsの親コンテナ）の調整 */
+/* Streamlitの内部クラスに依存するため、`div[data-testid="stHorizontalBlock"]` を使用して、サイコロを内包するカラム間の隙間を制御 */
+div[data-testid="stHorizontalBlock"] {
+    gap: 0.5rem; /* カラム間の隙間を詰める */
 }
 
 /* --- サイコロの横幅・縦幅を調整 --- */
 .dice {
-    font-size: 2.5rem; /* フォントサイズを小さく */
+    font-size: 2.5rem;
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
-    border-radius: 0.5rem; /* 角丸も小さく */
-    padding: 0.3rem 0; /* 縦パディングを大幅に削減 */
+    border-radius: 0.5rem;
+    padding: 0.3rem 0;
     display: block;
-    width: 100%;
+    /* 18%幅相当にするため、カラムの幅 (約20%) を利用し、余白を増やす */
+    width: 100%; /* カラム幅いっぱいに使う */
     height: auto;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
+    margin: 0 auto; /* 中央寄せ */
 }
 
 .dice-kept {
@@ -132,7 +142,7 @@ st.markdown("""
     color: #ffffff;
     border: none;
     border-radius: 0.75rem;
-    padding: 0.8rem 1rem; /* パディングを少し小さく */
+    padding: 0.8rem 1rem;
     font-weight: 600;
     width: 100%;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
@@ -147,56 +157,6 @@ st.markdown("""
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
-.info-badge {
-    text-align: center;
-    padding: 0.75rem;
-    background: #fff3e0;
-    border: 2px solid #ffb74d;
-    border-radius: 0.625rem;
-    color: #e65100;
-    font-weight: 600;
-    font-size: 0.875rem;
-    margin: 1rem 0;
-}
-
-/* スコアカード */
-.score-section {
-    background: #ffffff;
-    border: 3px solid #81c784;
-    border-radius: 1.25rem;
-    padding: 1rem;
-    margin: 1rem 0;
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
-}
-
-.section-title {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #2e7d32;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid #a5d6a7;
-}
-
-.score-item {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-}
-
-.total-score-box {
-    padding: 1.5rem 1rem;
-}
-
-.total-score-number {
-    font-size: 3rem;
-}
-
-/* ターン情報 */
-.turn-info {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-}
-
 /* チェックボックス (キープボタン用) */
 .stCheckbox {
     display: flex;
@@ -206,62 +166,48 @@ st.markdown("""
 }
 
 .stCheckbox > label {
-    font-size: 0.75rem; /* 小さく */
+    font-size: 0.75rem;
     color: #2e7d32 !important;
     font-weight: 600;
     display: flex;
     align-items: center;
 }
 
-/* サイドバー */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
-    border-right: 3px solid #81c784;
-}
-
-[data-testid="stSidebar"] h3 {
-    color: #2e7d32;
-    font-weight: 700;
-    font-size: 1.15rem;
-}
-
-[data-testid="stSidebar"] p, 
-[data-testid="stSidebar"] li {
-    color: #33691e;
-    line-height: 1.6;
-    font-size: 0.9rem;
-}
-
-/* イースターエッグ */
-.celebration-text {
-    font-size: 1.2rem;
-    padding: 0.75rem;
-}
-
 /* レスポンシブ (390px幅に特化) */
 @media (max-width: 480px) {
     .dice {
-        font-size: 2.2rem; /* さらに小さく */
+        font-size: 2.2rem;
         padding: 0.4rem 0.1rem;
     }
     
-    .game-title {
-        font-size: 2rem;
+    .stCheckbox > label {
+        font-size: 0.7rem;
+    }
+
+    .score-item {
+        font-size: 0.85rem;
     }
     
     .total-score-number {
         font-size: 2.5rem;
     }
-    
-    .stCheckbox > label {
-        font-size: 0.7rem; /* キープラベルを最小限に */
-    }
-
-    .score-item {
-        padding: 0.75rem 0.75rem;
-        font-size: 0.85rem;
-    }
 }
+
+/* 以下、前回のコードのその他のスタイルを維持 */
+.info-badge { text-align: center; padding: 0.75rem; background: #fff3e0; border: 2px solid #ffb74d; border-radius: 0.625rem; color: #e65100; font-weight: 600; font-size: 0.875rem; margin: 1rem 0; }
+.score-section { background: #ffffff; border: 3px solid #81c784; border-radius: 1.25rem; padding: 1rem; margin: 1rem 0; box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15); }
+.section-title { font-size: 1.15rem; font-weight: 700; color: #2e7d32; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 3px solid #a5d6a7; }
+.score-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; margin: 0.5rem 0; border-radius: 0.625rem; background: #f1f8e9; border: 2px solid #c5e1a5; color: #33691e; transition: all 0.2s ease; }
+.score-item:hover { background: #dcedc8; transform: translateX(4px); }
+.score-filled { background: #c8e6c9; border: 2px solid #66bb6a; color: #1b5e20; font-weight: 600; }
+.total-score-box { background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%); text-align: center; padding: 1.5rem 1rem; border-radius: 1.25rem; margin: 1.25rem 0; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4); }
+.total-score-label { font-size: 0.875rem; color: #e8f5e9; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600; }
+.turn-info { display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #ffffff; border: 2px solid #81c784; border-radius: 0.75rem; margin: 1rem 0; font-size: 0.875rem; font-weight: 600; color: #2e7d32; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15); }
+[data-testid="stSidebar"] { background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%); border-right: 3px solid #81c784; }
+[data-testid="stSidebar"] h3 { color: #2e7d32; font-weight: 700; font-size: 1.15rem; }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] li { color: #33691e; line-height: 1.6; font-size: 0.9rem; }
+.celebration-text { background: linear-gradient(90deg, #66bb6a, #4caf50, #81c784, #a5d6a7, #66bb6a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 1.2rem; font-weight: 700; text-align: center; padding: 0.75rem; background-size: 200% 100%; animation: shimmer 3s linear infinite; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -342,10 +288,8 @@ if auth_status:
         if category == "full_house":
             return sum(dice) if sorted(counts.values()) == [2, 3] else 0
         if category == "small_straight":
-            # Small Straight check implementation (correct logic for four consecutive numbers)
             unique_dice = sorted(list(set(dice)))
             for seq in [[1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]]:
-                # Check if the unique dice contain the entire sequence
                 if all(x in unique_dice for x in seq):
                     return 15
             return 0
@@ -384,12 +328,10 @@ if auth_status:
             st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
             
             # 2. キープ用のチェックボックスをサイコロの下に配置
-            # 鍵マークを使用: 🔓 キープ (解除), ✅ キープ中 (ロック)
             keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
             st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
     
     if st.session_state.rolls_left > 0:
-        # use_container_width=True でボタンを横幅いっぱいに広げる
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
             roll_dice()
             st.rerun()

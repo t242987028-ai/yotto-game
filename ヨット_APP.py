@@ -3,7 +3,6 @@ import streamlit_authenticator as stauth
 import bcrypt
 import random
 from collections import Counter
-# import streamlit.components.v1 as components # <-- 削除
 
 # ページ設定
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="centered")
@@ -41,7 +40,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- CSS (st.buttonに合わせた修正) ---
+# --- CSS (スマホ最適化) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -81,7 +80,7 @@ st.markdown("""
     box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
 }
 
-/* サイコロエリア - スマホ最適化 */
+/* サイコロエリア */
 .dice-container {
     background: #ffffff;
     border: 3px solid #81c784;
@@ -95,7 +94,7 @@ st.markdown("""
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
-    margin-bottom: 0.5rem; /* ボタンとのスペースを調整 */
+    margin-bottom: 0.5rem;
     max-width: 100%;
 }
 
@@ -134,7 +133,7 @@ st.markdown("""
     75% { transform: rotate(10deg); }
 }
 
-/* ボタン（全体） */
+/* --- 全体ボタン --- */
 .stButton > button {
     background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
     color: #ffffff;
@@ -149,17 +148,12 @@ st.markdown("""
     font-size: 1rem;
 }
 
-.stButton > button:hover {
-    background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-}
-
-/* キープ/アンキープボタンの調整 */
+/* --- キープ/アンキープボタン (より小さく) --- */
 .keep-button button {
-    padding: 0.3rem 0.5rem !important;
-    font-size: 0.75rem !important;
-    font-weight: 500 !important;
+    /* 【修正】ボタンの縦幅とフォントサイズを削減 */
+    padding: 0.2rem 0.4rem !important; /* 縦パディングを大幅削減 */
+    font-size: 0.65rem !important;      /* フォントサイズを小さく */
+    font-weight: 600 !important;       /* 文字を強調 */
     border-radius: 0.5rem !important;
     margin-top: 0.25rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
@@ -169,21 +163,11 @@ st.markdown("""
 
 /* キープ状態のボタンの色 */
 .keep-button.kept button {
-    background: linear-gradient(135deg, #ff8a65 0%, #e57373 100%) !important;
-}
-
-.keep-button.kept button:hover {
-    background: linear-gradient(135deg, #e57373 0%, #d32f2f 100%) !important;
-    transform: none !important;
-    box-shadow: 0 2px 6px rgba(229, 115, 115, 0.5) !important;
+    background: linear-gradient(135deg, #ff8a65 0%, #e57373 100%) !important; /* 赤系 */
 }
 
 .keep-button.unkept button {
-    background: linear-gradient(135deg, #b2ff59 0%, #8bc34a 100%) !important;
-}
-
-.keep-button.unkept button:hover {
-    background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%) !important;
+    background: linear-gradient(135deg, #b2ff59 0%, #8bc34a 100%) !important; /* 黄緑系 */
 }
 
 /* st.buttonの標準マージンをサイコロ列内で無効化 */
@@ -203,9 +187,58 @@ st.markdown("""
     margin: 1rem 0;
 }
 
-/* スコアカード以下は省略 */
+/* スコアカード - スマホ最適化 */
+.score-section {
+    background: #ffffff;
+    border: 3px solid #81c784;
+    border-radius: 1.25rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
+}
 
-/* チェックボックス・スタイルは不要になったため削除 */
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #2e7d32;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid #a5d6a7;
+}
+
+/* 役のスコアリングボタン (より小さく) */
+.score-grid .stButton > button {
+    /* 【修正】スコアリングボタンの縦幅とフォントサイズを削減 */
+    padding: 0.4rem 0.5rem !important; /* 縦パディングを削減 */
+    font-size: 0.75rem !important;      /* フォントサイズを小さく */
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    border-radius: 0.625rem;
+    background: #f1f8e9;
+    border: 2px solid #c5e1a5;
+    font-size: 0.875rem;
+    color: #33691e;
+    transition: all 0.2s ease;
+}
+
+.score-filled {
+    background: #c8e6c9;
+    border: 2px solid #66bb6a;
+    color: #1b5e20;
+    font-weight: 600;
+}
+
+/* 合計スコア以下は省略 */
 
 /* レスポンシブ */
 @media (max-width: 480px) {
@@ -218,15 +251,18 @@ st.markdown("""
         font-size: 1.75rem;
     }
     
+    /* キープボタンの最終調整 */
     .keep-button button {
-        font-size: 0.65rem !important;
-        padding: 0.2rem 0.3rem !important;
+        font-size: 0.6rem !important;
+        padding: 0.15rem 0.3rem !important;
     }
-
-    /* その他レスポンシブは省略 */
+    
+    /* スコアボタンの最終調整 */
+    .score-grid .stButton > button {
+        font-size: 0.7rem !important;
+        padding: 0.3rem 0.3rem !important;
+    }
 }
-
-/* ... その他CSSは省略 ... */
 </style>
 """, unsafe_allow_html=True)
 
@@ -408,9 +444,11 @@ if auth_status:
                     if st.session_state.scores["upper"][key] is None:
                         potential = calculate_score(key, st.session_state.dice)
                         # スコアリングボタン
+                        st.markdown("<div class='score-grid'>", unsafe_allow_html=True) # CSS適用のため
                         if st.button(f"{label}\n{potential}点", key=f"u_{key}", use_container_width=True):
                             fill_score("upper", key)
                             st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点</span></div>", unsafe_allow_html=True)
     
@@ -443,9 +481,11 @@ if auth_status:
                     if st.session_state.scores["lower"][key] is None:
                         potential = calculate_score(key, st.session_state.dice)
                         # スコアリングボタン
+                        st.markdown("<div class='score-grid'>", unsafe_allow_html=True) # CSS適用のため
                         if st.button(f"{emoji} {label}\n{potential}点", key=f"l_{key}", use_container_width=True):
                             fill_score("lower", key)
                             st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点</span></div>", unsafe_allow_html=True)
     

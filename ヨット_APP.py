@@ -105,7 +105,7 @@ st.markdown("""
     padding: 1rem 0.5rem;
     display: block;
     width: 17.5%;
-    height: 45%;
+    height: 35%;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
@@ -550,4 +550,5 @@ if auth_status:
 
 elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
+
 

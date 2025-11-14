@@ -4,8 +4,8 @@ import bcrypt
 import random
 from collections import Counter
 
-# ページ設定
-st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="centered")
+# ページ設定: layout="centered" を削除し、レスポンシブを優先するため "wide" に変更
+st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="wide")
 
 # --- パスワードハッシュ化関数 ---
 def hash_password(password):
@@ -40,7 +40,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- 明るい緑・白・クリーム色のナチュラルCSS ---
+# --- 明るい緑・白・クリーム色のナチュラルCSS (スマホ最適化) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -51,12 +51,15 @@ st.markdown("""
 
 .stApp {
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
+    /* 狭い画面でも中央にコンテンツを寄せすぎない */
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 /* ヘッダー */
 .game-header {
     text-align: center;
-    padding: 2rem 1rem 1.5rem;
+    padding: 1.5rem 0.5rem 1rem;
 }
 
 .game-title {
@@ -85,27 +88,21 @@ st.markdown("""
     background: #ffffff;
     border: 3px solid #81c784;
     border-radius: 1.25rem;
-    padding: 1.5rem 1rem;
-    margin: 1.25rem 0;
+    padding: 1rem 0.5rem; /* パディングを小さく */
+    margin: 1rem 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
 }
 
-.dice-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
+/* --- サイコロの横幅・縦幅を調整 --- */
 .dice {
-    font-size: 3rem;
+    font-size: 2.5rem; /* フォントサイズを小さく */
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
-    border-radius: 0.75rem;
-    padding: 0.5rem 0.5rem;
+    border-radius: 0.5rem; /* 角丸も小さく */
+    padding: 0.3rem 0; /* 縦パディングを大幅に削減 */
     display: block;
-    width: 17.5%;
-    height: 40%;
+    width: 100%;
+    height: auto;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
@@ -135,13 +132,13 @@ st.markdown("""
     color: #ffffff;
     border: none;
     border-radius: 0.75rem;
-    padding: 1rem 1.5rem;
+    padding: 0.8rem 1rem; /* パディングを少し小さく */
     font-weight: 600;
-    width: 18%;
+    width: 100%;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .stButton > button:hover {
@@ -152,13 +149,13 @@ st.markdown("""
 
 .info-badge {
     text-align: center;
-    padding: 0.875rem;
+    padding: 0.75rem;
     background: #fff3e0;
     border: 2px solid #ffb74d;
     border-radius: 0.625rem;
     color: #e65100;
     font-weight: 600;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     margin: 1rem 0;
 }
 
@@ -167,97 +164,53 @@ st.markdown("""
     background: #ffffff;
     border: 3px solid #81c784;
     border-radius: 1.25rem;
-    padding: 1.5rem;
-    margin: 1.25rem 0;
+    padding: 1rem;
+    margin: 1rem 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
 }
 
 .section-title {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #2e7d32;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
     border-bottom: 3px solid #a5d6a7;
 }
 
 .score-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.875rem 1.25rem;
-    margin: 0.5rem 0;
-    border-radius: 0.625rem;
-    background: #f1f8e9;
-    border: 2px solid #c5e1a5;
-    font-size: 0.9375rem;
-    color: #33691e;
-    transition: all 0.2s ease;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
 }
 
-.score-item:hover {
-    background: #dcedc8;
-    transform: translateX(4px);
-}
-
-.score-filled {
-    background: #c8e6c9;
-    border: 2px solid #66bb6a;
-    color: #1b5e20;
-    font-weight: 600;
-}
-
-/* 合計スコア */
 .total-score-box {
-    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
-    text-align: center;
-    padding: 2rem 1.5rem;
-    border-radius: 1.25rem;
-    margin: 1.25rem 0;
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    padding: 1.5rem 1rem;
 }
 
 .total-score-number {
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0.25rem 0;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-}
-
-.total-score-label {
-    font-size: 0.875rem;
-    color: #e8f5e9;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-weight: 600;
+    font-size: 3rem;
 }
 
 /* ターン情報 */
 .turn-info {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.875rem 1.5rem;
-    background: #ffffff;
-    border: 2px solid #81c784;
-    border-radius: 0.75rem;
-    margin: 1rem 0;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #2e7d32;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
 }
 
-/* チェックボックス */
+/* チェックボックス (キープボタン用) */
 .stCheckbox {
     display: flex;
     justify-content: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
 }
 
 .stCheckbox > label {
-    font-size: 0.8125rem;
+    font-size: 0.75rem; /* 小さく */
     color: #2e7d32 !important;
     font-weight: 600;
+    display: flex;
+    align-items: center;
 }
 
 /* サイドバー */
@@ -269,39 +222,27 @@ st.markdown("""
 [data-testid="stSidebar"] h3 {
     color: #2e7d32;
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
 }
 
 [data-testid="stSidebar"] p, 
 [data-testid="stSidebar"] li {
     color: #33691e;
-    line-height: 1.7;
+    line-height: 1.6;
+    font-size: 0.9rem;
 }
 
 /* イースターエッグ */
 .celebration-text {
-    background: linear-gradient(90deg, #66bb6a, #4caf50, #81c784, #a5d6a7, #66bb6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.375rem;
-    font-weight: 700;
-    text-align: center;
-    padding: 1rem;
-    background-size: 200% 100%;
-    animation: shimmer 3s linear infinite;
+    font-size: 1.2rem;
+    padding: 0.75rem;
 }
 
-@keyframes shimmer {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
-}
-
-/* レスポンシブ */
+/* レスポンシブ (390px幅に特化) */
 @media (max-width: 480px) {
     .dice {
-        font-size: 2.5rem;
-        padding: 0.875rem 0.375rem;
+        font-size: 2.2rem; /* さらに小さく */
+        padding: 0.4rem 0.1rem;
     }
     
     .game-title {
@@ -312,8 +253,13 @@ st.markdown("""
         font-size: 2.5rem;
     }
     
-    .dice-grid {
-        gap: 0.5rem;
+    .stCheckbox > label {
+        font-size: 0.7rem; /* キープラベルを最小限に */
+    }
+
+    .score-item {
+        padding: 0.75rem 0.75rem;
+        font-size: 0.85rem;
     }
 }
 </style>
@@ -396,10 +342,14 @@ if auth_status:
         if category == "full_house":
             return sum(dice) if sorted(counts.values()) == [2, 3] else 0
         if category == "small_straight":
-            for i in range(2):
-                if sorted_dice[i:i+4] in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
+            # Small Straight check implementation (correct logic for four consecutive numbers)
+            unique_dice = sorted(list(set(dice)))
+            for seq in [[1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]]:
+                # Check if the unique dice contain the entire sequence
+                if all(x in unique_dice for x in seq):
                     return 15
             return 0
+            
         if category == "large_straight":
             return 30 if sorted_dice in [[1,2,3,4,5], [2,3,4,5,6]] else 0
         if category == "yacht":
@@ -424,16 +374,22 @@ if auth_status:
     # --- サイコロ表示 ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     
+    # 5つのカラムに分けて、サイコロとそのキープ用チェックボックスを配置
     cols = st.columns(5)
     for i, col in enumerate(cols):
         with col:
+            # 1. サイコロの表示 (HTML/CSSで装飾)
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
             st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
+            
+            # 2. キープ用のチェックボックスをサイコロの下に配置
+            # 鍵マークを使用: 🔓 キープ (解除), ✅ キープ中 (ロック)
             keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
             st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
     
     if st.session_state.rolls_left > 0:
+        # use_container_width=True でボタンを横幅いっぱいに広げる
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
             roll_dice()
             st.rerun()
@@ -550,8 +506,5 @@ if auth_status:
 
 elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
-
-
-
-
-
+elif auth_status == None:
+    st.warning("👤 ログインしてゲームを開始してください")

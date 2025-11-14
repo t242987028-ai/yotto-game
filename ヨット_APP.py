@@ -97,26 +97,37 @@ st.markdown("""
     margin-bottom: 1rem;
 }
 
-.dice {
-    font-size: 3rem;
+/* ★★★ サイコロボタンの基本スタイル (ここから修正) ★★★ */
+.stButton > button.dice-button {
+    height: auto;
+    width: 100%;
+    aspect-ratio: 1 / 1; /* 正方形にする */
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 1rem 0.5rem;
-    display: block;
-    width: 100%;
-    text-align: center;
+    font-size: 3rem; /* サイコロの絵文字サイズ */
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
-.dice-kept {
+/* ★★★ キープ時のスタイル (dice-keptクラスはStreamlitボタンに適用) ★★★ */
+.stButton > button.dice-kept {
     background: linear-gradient(145deg, #a5d6a7 0%, #81c784 100%);
     border-color: #4caf50;
     box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
     transform: translateY(-2px) scale(1.05);
 }
+
+.dice { 
+    /* st.markdownで描画されていた元の.dice要素は非表示 (念のため) */
+    display: none !important; 
+} 
 
 .dice-roll {
     animation: diceRoll 0.5s ease;
@@ -247,16 +258,9 @@ st.markdown("""
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
 }
 
-/* チェックボックス */
+/* チェックボックス (非表示にする) */
 .stCheckbox {
-    display: flex;
-    justify-content: center;
-}
-
-.stCheckbox > label {
-    font-size: 0.8125rem;
-    color: #2e7d32 !important;
-    font-weight: 600;
+    display: none !important;
 }
 
 /* サイドバー */
@@ -298,9 +302,9 @@ st.markdown("""
 
 /* レスポンシブ */
 @media (max-width: 480px) {
-    .dice {
-        font-size: 2.5rem;
-        padding: 0.875rem 0.375rem;
+    /* サイコロのフォントサイズを調整 */
+    .stButton > button.dice-button {
+        font-size: 2.5rem; 
     }
     
     .game-title {
@@ -355,6 +359,10 @@ if auth_status:
                 "small_straight": None, "large_straight": None, "yacht": None
             }
         }
+    
+    # ★★★ 新しい関数: サイコロのキープ状態をトグルする ★★★
+    def toggle_keep(index):
+        st.session_state.keep[index] = not st.session_state.keep[index]
 
     def roll_dice():
         for i in range(5):
@@ -395,12 +403,13 @@ if auth_status:
         if category == "full_house":
             return sum(dice) if sorted(counts.values()) == [2, 3] else 0
         if category == "small_straight":
-            for i in range(2):
-                if sorted_dice[i:i+4] in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
+            # 4連続の判定
+            for subset in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
+                if all(d in set(dice) for d in subset):
                     return 15
             return 0
         if category == "large_straight":
-            return 30 if sorted_dice in [[1,2,3,4,5], [2,3,4,5,6]] else 0
+            return 30 if sorted_dice == [1,2,3,4,5] or sorted_dice == [2,3,4,5,6] else 0
         if category == "yacht":
             return 50 if 5 in counts.values() else 0
         return 0
@@ -421,16 +430,38 @@ if auth_status:
         return upper_total + bonus + lower_total
 
     # --- サイコロ表示 ---
-    st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
+    st.markdown("<div class='dice-container'><div class='dice-grid'>", unsafe_allow_html=True)
     
-    cols = st.columns(5)
+    cols = st.columns(5) # 5個横並び
+    
     for i, col in enumerate(cols):
         with col:
+            # 1. サイコロの値でボタンを生成し、on_clickでキープをトグル
+            st.button(dice_faces[st.session_state.dice[i]], 
+                      key=f"dice_{i}", 
+                      use_container_width=True,
+                      on_click=toggle_keep, 
+                      args=(i,))
+            
+            # 2. カスタムCSSクラスを適用するためのJavaScriptを注入
+            # これにより、Streamlitのボタンがサイコロとして整形され、キープ状態が色で反映される
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
-            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
+            
+            # st.buttonによって生成されたボタン要素にカスタムクラスを付与する
+            st.markdown(f"""
+            <script>
+                // stButtonのコンテナ内のbutton要素を探す
+                const button = document.querySelector('[data-testid="stButton"] button[key="dice_{i}"]');
+                if (button) {{
+                    button.classList.add('dice-button'); // 新しいCSSクラス
+                    if ('{kept_class}') {{ button.classList.add('{kept_class}'); }}
+                    if ('{shake_class}') {{ button.classList.add('{shake_class}'); }}
+                }}
+            </script>
+            """, unsafe_allow_html=True)
+            
+    st.markdown("</div>", unsafe_allow_html=True)
     
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):

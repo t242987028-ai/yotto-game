@@ -95,7 +95,7 @@ st.markdown("""
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
     margin-bottom: 1rem;
-    max-width: 100%;
+    max-width: 20%;
 }
 
 .dice {
@@ -639,3 +639,4 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+

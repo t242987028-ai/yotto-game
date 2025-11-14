@@ -40,7 +40,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- 明るい緑・白・クリーム色のナチュラルCSS ---
+# --- スマホ最適化CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -56,11 +56,11 @@ st.markdown("""
 /* ヘッダー */
 .game-header {
     text-align: center;
-    padding: 2rem 1rem 1.5rem;
+    padding: 1.5rem 1rem 1rem;
 }
 
 .game-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #2e7d32;
     margin: 0 0 0.5rem 0;
@@ -80,42 +80,67 @@ st.markdown("""
     box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
 }
 
-/* サイコロエリア */
+/* サイコロエリア - スマホ最適化 */
 .dice-container {
     background: #ffffff;
     border: 3px solid #81c784;
     border-radius: 1.25rem;
-    padding: 1.5rem 1rem;
-    margin: 1.25rem 0;
+    padding: 1rem;
+    margin: 1rem 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
 }
 
 .dice-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
+    gap: 0.5rem;
     margin-bottom: 1rem;
+    max-width: 100%;
 }
 
 .dice {
-    font-size: 3rem;
+    font-size: 2.5rem;
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 1rem 0.5rem;
-    display: block;
+    padding: 0.75rem 0.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    text-align: center;
+    aspect-ratio: 1;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dice:active {
+    transform: scale(0.95);
 }
 
 .dice-kept {
     background: linear-gradient(145deg, #a5d6a7 0%, #81c784 100%);
     border-color: #4caf50;
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
-    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
+    transform: scale(1.05);
+}
+
+.dice-kept:active {
+    transform: scale(1.0);
+}
+
+.dice-label {
+    font-size: 0.625rem;
+    margin-top: 0.25rem;
+    font-weight: 600;
+    color: #2e7d32;
+}
+
+.dice-kept .dice-label {
+    color: #1b5e20;
 }
 
 .dice-roll {
@@ -151,52 +176,63 @@ st.markdown("""
 
 .info-badge {
     text-align: center;
-    padding: 0.875rem;
+    padding: 0.75rem;
     background: #fff3e0;
     border: 2px solid #ffb74d;
     border-radius: 0.625rem;
     color: #e65100;
     font-weight: 600;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     margin: 1rem 0;
 }
 
-/* スコアカード */
+/* スコアカード - スマホ最適化 */
 .score-section {
     background: #ffffff;
     border: 3px solid #81c784;
     border-radius: 1.25rem;
-    padding: 1.5rem;
-    margin: 1.25rem 0;
+    padding: 1rem;
+    margin: 1rem 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
 }
 
 .section-title {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
     color: #2e7d32;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
     border-bottom: 3px solid #a5d6a7;
+}
+
+/* 2カラムグリッド - スマホ最適化 */
+.score-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.score-grid .stButton > button {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .score-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.875rem 1.25rem;
-    margin: 0.5rem 0;
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
     border-radius: 0.625rem;
     background: #f1f8e9;
     border: 2px solid #c5e1a5;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: #33691e;
     transition: all 0.2s ease;
-}
-
-.score-item:hover {
-    background: #dcedc8;
-    transform: translateX(4px);
 }
 
 .score-filled {
@@ -210,14 +246,14 @@ st.markdown("""
 .total-score-box {
     background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
     text-align: center;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1rem;
     border-radius: 1.25rem;
-    margin: 1.25rem 0;
+    margin: 1rem 0;
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
 .total-score-number {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 700;
     color: #ffffff;
     margin: 0.25rem 0;
@@ -225,7 +261,7 @@ st.markdown("""
 }
 
 .total-score-label {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: #e8f5e9;
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -236,27 +272,15 @@ st.markdown("""
 .turn-info {
     display: flex;
     justify-content: space-between;
-    padding: 0.875rem 1.5rem;
+    padding: 0.75rem 1rem;
     background: #ffffff;
     border: 2px solid #81c784;
     border-radius: 0.75rem;
     margin: 1rem 0;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #2e7d32;
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
-}
-
-/* チェックボックス */
-.stCheckbox {
-    display: flex;
-    justify-content: center;
-}
-
-.stCheckbox > label {
-    font-size: 0.8125rem;
-    color: #2e7d32 !important;
-    font-weight: 600;
 }
 
 /* サイドバー */
@@ -268,13 +292,14 @@ st.markdown("""
 [data-testid="stSidebar"] h3 {
     color: #2e7d32;
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
 }
 
 [data-testid="stSidebar"] p, 
 [data-testid="stSidebar"] li {
     color: #33691e;
-    line-height: 1.7;
+    line-height: 1.6;
+    font-size: 0.875rem;
 }
 
 /* イースターエッグ */
@@ -283,7 +308,7 @@ st.markdown("""
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     font-weight: 700;
     text-align: center;
     padding: 1rem;
@@ -296,15 +321,24 @@ st.markdown("""
     100% { background-position: 200% 50%; }
 }
 
+/* チェックボックスを非表示 */
+.stCheckbox {
+    display: none !important;
+}
+
 /* レスポンシブ */
 @media (max-width: 480px) {
     .dice {
-        font-size: 2.5rem;
-        padding: 0.875rem 0.375rem;
+        font-size: 2rem;
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .dice-label {
+        font-size: 0.5rem;
     }
     
     .game-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
     }
     
     .total-score-number {
@@ -312,7 +346,22 @@ st.markdown("""
     }
     
     .dice-grid {
-        gap: 0.5rem;
+        gap: 0.375rem;
+    }
+    
+    .score-grid .stButton > button {
+        font-size: 0.75rem;
+        padding: 0.625rem 0.375rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .dice {
+        font-size: 1.75rem;
+    }
+    
+    .dice-label {
+        font-size: 0.5rem;
     }
 }
 </style>
@@ -365,6 +414,9 @@ if auth_status:
                 st.session_state.shake[i] = False
         st.session_state.rolls_left -= 1
         check_easter_eggs()
+
+    def toggle_keep(index):
+        st.session_state.keep[index] = not st.session_state.keep[index]
 
     def check_easter_eggs():
         dice = st.session_state.dice
@@ -420,17 +472,36 @@ if auth_status:
         lower_total = sum(s for s in st.session_state.scores["lower"].values() if s is not None)
         return upper_total + bonus + lower_total
 
-    # --- サイコロ表示 ---
+    # --- サイコロ表示（タップでキープ） ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
+    st.markdown("<div class='dice-grid'>", unsafe_allow_html=True)
     
     cols = st.columns(5)
     for i, col in enumerate(cols):
         with col:
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
-            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
+            label = "✓" if st.session_state.keep[i] else "タップ"
+            
+            # タップ可能なサイコロ
+            st.markdown(f"""
+            <div class='dice {shake_class} {kept_class}' onclick=''>
+                <div>{dice_faces[st.session_state.dice[i]]}</div>
+                <div class='dice-label'>{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # 非表示のチェックボックスでキープ状態を管理
+            if st.checkbox("", key=f"keep_{i}", value=st.session_state.keep[i], label_visibility="collapsed"):
+                if not st.session_state.keep[i]:
+                    toggle_keep(i)
+                    st.rerun()
+            else:
+                if st.session_state.keep[i]:
+                    toggle_keep(i)
+                    st.rerun()
+    
+    st.markdown("</div>", unsafe_allow_html=True)
     
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
@@ -449,7 +520,7 @@ if auth_status:
     </div>
     """, unsafe_allow_html=True)
 
-    # --- スコア表 ---
+    # --- スコア表（2カラム） ---
     # 上段
     st.markdown("<div class='score-section'><div class='section-title'>🔢 数字カテゴリ</div>", unsafe_allow_html=True)
     
@@ -458,21 +529,30 @@ if auth_status:
         "4": "4️⃣ フォー", "5": "5️⃣ ファイブ", "6": "6️⃣ シックス"
     }
     
-    for key, label in upper_labels.items():
-        if st.session_state.scores["upper"][key] is None:
-            potential = calculate_score(key, st.session_state.dice)
-            if st.button(f"{label} → {potential}点", key=f"u_{key}", use_container_width=True):
-                fill_score("upper", key)
-                st.rerun()
-        else:
-            st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点 ✓</span></div>", unsafe_allow_html=True)
+    # 2カラムで表示
+    upper_keys = list(upper_labels.keys())
+    for row in range(3):
+        cols = st.columns(2)
+        for col_idx in range(2):
+            idx = row * 2 + col_idx
+            if idx < len(upper_keys):
+                key = upper_keys[idx]
+                label = upper_labels[key]
+                with cols[col_idx]:
+                    if st.session_state.scores["upper"][key] is None:
+                        potential = calculate_score(key, st.session_state.dice)
+                        if st.button(f"{label}\n{potential}点", key=f"u_{key}", use_container_width=True):
+                            fill_score("upper", key)
+                            st.rerun()
+                    else:
+                        st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点</span></div>", unsafe_allow_html=True)
     
     upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
-    bonus_text = "🎁 ボーナス達成 +35点!" if upper_total >= 63 else f"ボーナスまであと{63-upper_total}点"
+    bonus_text = "🎁 +35点!" if upper_total >= 63 else f"あと{63-upper_total}点"
     st.markdown(f"<div class='score-item'><span><strong>小計</strong></span><span><strong>{upper_total}点</strong> ({bonus_text})</span></div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # 下段
+    # 下段（2カラム）
     st.markdown("<div class='score-section'><div class='section-title'>🎯 役カテゴリ</div>", unsafe_allow_html=True)
     
     lower_labels = {
@@ -484,14 +564,22 @@ if auth_status:
         "yacht": ("⛵", "ヨット")
     }
     
-    for key, (emoji, label) in lower_labels.items():
-        if st.session_state.scores["lower"][key] is None:
-            potential = calculate_score(key, st.session_state.dice)
-            if st.button(f"{emoji} {label} → {potential}点", key=f"l_{key}", use_container_width=True):
-                fill_score("lower", key)
-                st.rerun()
-        else:
-            st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点 ✓</span></div>", unsafe_allow_html=True)
+    lower_keys = list(lower_labels.keys())
+    for row in range(3):
+        cols = st.columns(2)
+        for col_idx in range(2):
+            idx = row * 2 + col_idx
+            if idx < len(lower_keys):
+                key = lower_keys[idx]
+                emoji, label = lower_labels[key]
+                with cols[col_idx]:
+                    if st.session_state.scores["lower"][key] is None:
+                        potential = calculate_score(key, st.session_state.dice)
+                        if st.button(f"{emoji} {label}\n{potential}点", key=f"l_{key}", use_container_width=True):
+                            fill_score("lower", key)
+                            st.rerun()
+                    else:
+                        st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点</span></div>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -531,7 +619,7 @@ if auth_status:
         st.markdown("""
         **基本ルール**
         - 各ターン最大3回振れます
-        - サイコロを選択してキープ可能
+        - サイコロをタップしてキープ
         - 12ターンで全カテゴリを埋める
         
         **ボーナス**

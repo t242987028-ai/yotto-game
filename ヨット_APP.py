@@ -31,7 +31,7 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=30,
 
     # ← スマホ（特にiPhone Safari）対応
-    cookie_secure=False,
+    cookie_secure=True,
     cookie_samesite="None"
 )
 
@@ -555,4 +555,5 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+
 

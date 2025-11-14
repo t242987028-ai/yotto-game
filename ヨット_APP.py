@@ -90,23 +90,36 @@ st.markdown("""
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
 }
 
-/* サイコロボタンのスタイル */
-.stButton > button[data-testid="baseButton-secondary"] {
-    font-size: 3rem !important;
-    background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%) !important;
-    border: 3px solid #fbc02d !important;
-    border-radius: 0.75rem !important;
-    padding: 0.75rem 0.5rem !important;
-    aspect-ratio: 1 !important;
-    min-height: 80px !important;
-    box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1) !important;
-    transition: all 0.3s ease !important;
+.dice-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: nowrap;
 }
 
-.stButton > button[data-testid="baseButton-secondary"]:hover {
-    background: linear-gradient(145deg, #fff9c4 0%, #fff176 100%) !important;
-    transform: translateY(-3px) scale(1.05) !important;
-    box-shadow: 0 6px 12px rgba(251, 192, 45, 0.4) !important;
+.dice {
+    font-size: 3rem;
+    background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
+    border: 3px solid #fbc02d;
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    width: 18%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
+    transition: all 0.3s ease;
+}
+
+.dice-kept {
+    background: linear-gradient(145deg, #a5d6a7 0%, #81c784 100%);
+    border-color: #4caf50;
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
+    transform: translateY(-2px) scale(1.05);
 }
 
 .dice-roll {
@@ -119,12 +132,26 @@ st.markdown("""
     75% { transform: rotate(10deg); }
 }
 
-.keep-instruction {
-    text-align: center;
-    color: #2e7d32;
-    font-size: 0.875rem;
-    font-weight: 600;
+.keep-button-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
     margin-bottom: 1rem;
+}
+
+/* キープボタン用のスタイル */
+div[data-testid="column"] > div > div > div > button[kind="secondary"] {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.2rem !important;
+    min-height: 35px !important;
+    background: #f1f8e9 !important;
+    border: 2px solid #c5e1a5 !important;
+    color: #2e7d32 !important;
+}
+
+div[data-testid="column"] > div > div > div > button[kind="secondary"]:hover {
+    background: #dcedc8 !important;
+    border-color: #aed581 !important;
 }
 
 /* ボタン */
@@ -302,6 +329,12 @@ st.markdown("""
     .total-score-number {
         font-size: 2.5rem;
     }
+    
+    div[data-testid="column"] > div > div > div > button[kind="secondary"] {
+        font-size: 0.65rem !important;
+        padding: 0.3rem 0.1rem !important;
+        min-height: 30px !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -320,8 +353,10 @@ st.markdown("""
         font-size: 1.75rem;
     }
     
-    .keep-instruction {
-        font-size: 0.75rem;
+    div[data-testid="column"] > div > div > div > button[kind="secondary"] {
+        font-size: 0.6rem !important;
+        padding: 0.25rem 0.05rem !important;
+        min-height: 28px !important;
     }
 }
 </style>
@@ -435,28 +470,21 @@ if auth_status:
     # --- サイコロ表示 ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     
-    # キープ指示
-    if st.session_state.rolls_left > 0:
-        st.markdown("<div class='keep-instruction'>📌 サイコロをタップしてキープ</div>", unsafe_allow_html=True)
+    # サイコロを横並びで表示
+    dice_html = "<div class='dice-grid'>"
+    for i in range(5):
+        shake_class = "dice-roll" if st.session_state.shake[i] else ""
+        kept_class = "dice-kept" if st.session_state.keep[i] else ""
+        dice_html += f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>"
+    dice_html += "</div>"
+    st.markdown(dice_html, unsafe_allow_html=True)
     
-    # サイコロを横並びで表示（ボタンとして）
+    # キープボタンを横並びで表示
     cols = st.columns(5)
     for i, col in enumerate(cols):
         with col:
-            shake_class = "dice-roll" if st.session_state.shake[i] else ""
-            kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            
-            # キープ状態をCSSクラスで管理するため、コンテナにマーク
-            if st.session_state.keep[i]:
-                st.markdown(f'<style>button[kind="secondary"]:has(> div:contains("{dice_faces[st.session_state.dice[i]]}")) {{ background: linear-gradient(145deg, #a5d6a7 0%, #81c784 100%) !important; border-color: #4caf50 !important; box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4) !important; }}</style>', unsafe_allow_html=True)
-            
-            # サイコロの見た目を持つボタン
-            if st.button(
-                dice_faces[st.session_state.dice[i]], 
-                key=f"dice_{i}",
-                help="キープ/解除",
-                use_container_width=True
-            ):
+            button_label = "✓ キープ中" if st.session_state.keep[i] else "📌 キープ"
+            if st.button(button_label, key=f"keep_{i}", use_container_width=True):
                 toggle_keep(i)
                 st.rerun()
     

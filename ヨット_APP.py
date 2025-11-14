@@ -5,7 +5,6 @@ import random
 from collections import Counter
 
 # ページ設定
-# layout="centered" のままだと画面の幅をフルに使えないため、layout="wide" に変更します。
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="wide") 
 
 # --- パスワードハッシュ化関数 ---
@@ -57,7 +56,6 @@ st.markdown("""
 
 .stApp {
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
-    /* layout="wide" に合わせた調整 */
     padding-left: 0.5rem;
     padding-right: 0.5rem;
 }
@@ -89,8 +87,8 @@ st.markdown("""
     border: 3px solid #81c784;
     border-radius: 1.25rem;
     padding: 1.25rem 0.75rem;
-    margin: 1rem auto; /* 中央寄せ */
-    max-width: 450px; /* PCでの幅を制限 */
+    margin: 1rem auto;
+    max-width: 450px;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
 }
 
@@ -137,38 +135,42 @@ st.markdown("""
     75% { transform: rotate(10deg); }
 }
 
+/* st.button のスタイル（ロールボタン、スコアボタン共通） */
 .stButton > button:not(.dice-button) {
     background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
     color: #ffffff;
     border: none;
     border-radius: 0.75rem;
-    padding: 0.8rem 1rem;
+    padding: 0.8rem 0.6rem; /* パディングを少し調整 */
     font-weight: 600;
     width: 100%;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
     transition: all 0.2s ease;
-    font-size: 0.95rem;
+    font-size: 0.9rem; /* フォントサイズを少し小さく */
+    margin-bottom: 0.4rem; /* ボタン間のスペース調整 */
 }
+
 
 /* スコアカード配置の修正 */
 .score-main-container {
-    max-width: 900px; /* スコアボード全体の最大幅を制限 */
+    max-width: 900px;
     margin: 1rem auto;
 }
 
+/* PCサイズ (769px以上) でのみ横並びを適用 */
 .score-card-grid {
-    display: flex; /* Flexboxで横に並べる */
+    display: flex;
     gap: 1.5rem;
     margin-bottom: 1rem;
 }
 
 .score-section {
-    flex-basis: 50%; /* 2列で均等に幅を分割 */
+    flex-basis: 50%;
     background: #ffffff;
     border: 3px solid #81c784;
     border-radius: 1.25rem;
     padding: 1.25rem;
-    min-width: 0; /* Flexアイテムの最小幅をリセット */
+    min-width: 0;
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
 }
 
@@ -201,10 +203,11 @@ st.markdown("""
     margin: 1rem auto;
 }
 
-/* モバイル向け調整（ここで縦並びに戻す） */
+/* モバイル向け調整（768px以下の場合） */
 @media (max-width: 768px) {
+    /* スコアボードのセクションは強制的に縦並びに戻す */
     .score-card-grid {
-        flex-direction: column; /* 画面幅が狭い場合は縦並びに戻す */
+        flex-direction: column; 
         gap: 0;
     }
     .score-section {
@@ -216,7 +219,6 @@ st.markdown("""
     }
 }
 
-/* その他のモバイル調整 (変更なし) */
 @media (max-width: 480px) {
     .stButton > button.dice-button {
         font-size: 2rem;
@@ -225,6 +227,14 @@ st.markdown("""
     .dice-grid {
         gap: 0.3rem;
     }
+    .stButton > button:not(.dice-button) {
+        font-size: 0.8rem; /* さらに小さくしてボタン内に収まりやすく */
+    }
+}
+
+/* Streamlitのコンポーネントが生成するパディングを調整 */
+div[data-testid="stVerticalBlock"] > div > div > div:nth-child(2) > div:nth-child(1) {
+    padding-top: 0;
 }
 .stCheckbox { display: none; }
 </style>
@@ -393,10 +403,9 @@ if auth_status:
 
     # --- スコア表のレイアウト修正 ---
     
-    # 全体のコンテナ
     st.markdown("<div class='score-main-container'>", unsafe_allow_html=True)
     
-    # 2列コンテナ（スマホでは縦並びに戻るようにCSSで制御）
+    # PCでは横並び、モバイルでは縦並び
     st.markdown("<div class='score-card-grid'>", unsafe_allow_html=True)
     
     # 上段スコア (左列)
@@ -409,18 +418,25 @@ if auth_status:
             "4": "4️⃣ フォー", "5": "5️⃣ ファイブ", "6": "6️⃣ シックス"
         }
         
-        for key, label in upper_labels.items():
-            if st.session_state.scores["upper"][key] is None:
-                potential = calculate_score(key, st.session_state.dice)
-                if st.button(f"{label} → {potential}点", key=f"u_{key}", use_container_width=True):
-                    fill_score("upper", key)
-                    st.rerun()
-            else:
-                st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点 ✓</span></div>", unsafe_allow_html=True)
+        # 💡 st.columns(2) でボタンを2列に分割し、縦幅を削減
+        cols = st.columns(2)
+        for i, (key, label) in enumerate(upper_labels.items()):
+            col = cols[i % 2]
+            with col:
+                if st.session_state.scores["upper"][key] is None:
+                    potential = calculate_score(key, st.session_state.dice)
+                    if st.button(f"{label} → {potential}点", key=f"u_{key}", use_container_width=True):
+                        fill_score("upper", key)
+                        st.rerun()
+                else:
+                    st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点 ✓</span></div>", unsafe_allow_html=True)
         
         upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
+        bonus = 35 if upper_total >= 63 else 0
         bonus_text = "🎁 ボーナス達成 +35点!" if upper_total >= 63 else f"ボーナスまであと{63-upper_total}点"
-        st.markdown(f"<div class='score-item'><span><strong>小計</strong></span><span><strong>{upper_total}点</strong> ({bonus_text})</span></div>", unsafe_allow_html=True)
+        
+        # 小計は1列で表示
+        st.markdown(f"<div class='score-item'><span><strong>小計 ({bonus}点)</strong></span><span><strong>{upper_total + bonus}点</strong> ({bonus_text})</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     
     # 下段スコア (右列)
@@ -437,14 +453,18 @@ if auth_status:
             "yacht": ("⛵", "ヨット")
         }
         
-        for key, (emoji, label) in lower_labels.items():
-            if st.session_state.scores["lower"][key] is None:
-                potential = calculate_score(key, st.session_state.dice)
-                if st.button(f"{emoji} {label} → {potential}点", key=f"l_{key}", use_container_width=True):
-                    fill_score("lower", key)
-                    st.rerun()
-            else:
-                st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点 ✓</span></div>", unsafe_allow_html=True)
+        # 💡 st.columns(2) でボタンを2列に分割し、縦幅を削減
+        cols = st.columns(2)
+        for i, (key, (emoji, label)) in enumerate(lower_labels.items()):
+            col = cols[i % 2]
+            with col:
+                if st.session_state.scores["lower"][key] is None:
+                    potential = calculate_score(key, st.session_state.dice)
+                    if st.button(f"{emoji} {label} → {potential}点", key=f"l_{key}", use_container_width=True):
+                        fill_score("lower", key)
+                        st.rerun()
+                else:
+                    st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点 ✓</span></div>", unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 

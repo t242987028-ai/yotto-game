@@ -3,7 +3,7 @@ import streamlit_authenticator as stauth
 import bcrypt
 import random
 from collections import Counter
-import streamlit.components.v1 as components # <-- 【復活】
+# import streamlit.components.v1 as components # <-- 削除
 
 # ページ設定
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="centered")
@@ -41,60 +41,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- JavaScriptのインジェクション ---
-# タップイベントを非表示のチェックボックスクリックに変換するJS
-js_code = """
-<script>
-    function setupDiceClick() {
-        const diceContainers = document.querySelectorAll('.dice-tap-area');
-        diceContainers.forEach((container, index) => {
-            // 既存のリスナーを削除 (二重登録防止)
-            container.removeEventListener('click', handleDiceClick);
-            
-            // 新しいリスナーを登録
-            container.addEventListener('click', handleDiceClick);
-            
-            // サイコロのインデックスをカスタムデータ属性として設定
-            container.setAttribute('data-dice-index', index);
-        });
-    }
-
-    function handleDiceClick(event) {
-        event.preventDefault(); // デフォルトの動作を防ぐ
-        event.stopPropagation(); // イベントのバブリングを防ぐ
-
-        const parent = event.currentTarget;
-        const diceIndex = parent.getAttribute('data-dice-index');
-        
-        // st.checkbox のラッパーを探索 (IDやkeyに基づいて検索)
-        // Streamlitの内部構造に依存するため、最も確実な方法で検索
-        const targetElement = document.querySelector('[data-testid="stColumn"]:nth-child(' + (parseInt(diceIndex) + 1) + ') [data-testid="stCheckbox"] input[type="checkbox"]');
-
-        if (targetElement) {
-            // プログラムでクリックイベントを発火させる
-            targetElement.click();
-        }
-    }
-
-    // MutationObserver: StreamlitがDOMを更新するたびに再セットアップを試みる
-    // これが Streamlit の rerun 後も動作させるための最も重要な対策です
-    const observer = new MutationObserver(function(mutations) {
-        // diceContainersが存在し、かつDOM変更があった場合に再セットアップ
-        if (document.querySelector('.dice-tap-area')) {
-            setupDiceClick();
-        }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // 初回ロード時
-    setupDiceClick();
-</script>
-"""
-# HTMLとしてStreamlitに埋め込む
-components.html(js_code, height=0, width=0)
-
-# --- CSS (タップ対応と極小化の再調整) ---
+# --- CSS (チェックボックスをサイコロの見た目にする) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -125,26 +72,12 @@ st.markdown("""
     max-width: 100%;
 }
 
-/* 【重要】タップ領域のコンテナ */
-.dice-tap-area {
-    width: 100%;
-    aspect-ratio: 1;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    display: flex; 
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* サイコロの見た目 */
+/* --- サイコロの見た目 --- */
 .dice {
     font-size: 2.2rem;
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 0.75rem 0.25rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -154,6 +87,7 @@ st.markdown("""
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
     user-select: none;
+    padding: 0.5rem 0.25rem;
 }
 
 .dice-kept {
@@ -175,37 +109,44 @@ st.markdown("""
     color: #1b5e20;
 }
 
-/* 【重要】チェックボックスを完全に非表示にし、サイコロの見た目と入れ替える */
-[data-testid="stCheckbox"] {
+/* --- 【最重要】チェックボックスのスタイルを上書き --- */
+
+/* stColumn内のstCheckboxコンテナ */
+[data-testid="stColumn"] [data-testid="stCheckbox"] {
+    position: relative;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* チェックボックスのチェックマークと枠を非表示 */
+[data-testid="stCheckbox"] input[type="checkbox"] {
     position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
-
-/* st.checkboxの親要素（stColumn）をFlexコンテナ化し、チェックボックスをサイコロの見た目と重ねる */
-[data-testid="stColumn"] {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-}
-
-/* Streamlitのボタン全般 */
-.stButton > button {
-    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
-    color: #ffffff;
-    border-radius: 0.75rem;
-    padding: 1rem 1.5rem;
-    font-weight: 600;
+    opacity: 0; /* 完全に見えなくする */
+    left: 0;
+    top: 0;
     width: 100%;
-    font-size: 1rem;
+    height: 100%;
+    z-index: 100; /* 最前面に配置してタップを確実に受け付ける */
+    cursor: pointer;
 }
 
-/* 役のスコアリングボタンの調整（前回の極小化CSSを適用） */
+/* チェックボックスのラベル（サイコロの見た目）を配置 */
+[data-testid="stCheckbox"] label {
+    display: block;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative; /* サイコロの見た目の基準 */
+    z-index: 10; /* チェックボックスより奥に配置 */
+}
+
+/* StreamlitがCheckboxのラベルとして挿入するdiv（これがサイコロの見た目になる） */
+[data-testid="stCheckbox"] label > div:nth-of-type(2) { 
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* --- 役のスコアリングボタンの調整（前回の極小化CSSを維持） --- */
 .stColumn .stButton:nth-child(1) > button { 
     padding: 0.4rem 0.5rem !important; 
     font-size: 0.75rem !important;      
@@ -236,18 +177,9 @@ st.markdown("""
 
 dice_faces = {1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅"}
 
-secret_messages = [
-    "🎊 すごい！ヨットマスター！",
-    "✨ 運命の一振り！",
-    "🌟 サイコロの神が微笑んだ！",
-    "🎯 完璧なタイミング！",
-    "🔥 伝説の出目！"
-]
-
-# --- ゲーム本体 ---
+# --- ゲーム本体 (ロジックは前回と同じ) ---
 if auth_status:
-
-    # ヘッダー (CSSは省略)
+    # ヘッダー (省略)
     st.markdown(f"""
     <div class='game-header'>
         <div class='game-title'>🎲 ヨットダイス</div>
@@ -255,7 +187,7 @@ if auth_status:
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 初期化 ---
+    # --- 初期化 (省略) ---
     if "dice" not in st.session_state:
         st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
         st.session_state.rolls_left = 2
@@ -272,6 +204,7 @@ if auth_status:
             }
         }
 
+    # ロジック関数 (省略)
     def roll_dice():
         for i in range(5):
             if not st.session_state.keep[i]:
@@ -280,14 +213,20 @@ if auth_status:
             else:
                 st.session_state.shake[i] = False
         st.session_state.rolls_left -= 1
-        check_easter_eggs()
+        # check_easter_eggs()
 
-    def check_easter_eggs():
-        # ... (省略: 前のバージョンの関数と同じ)
-        pass
+    # スコア計算などは省略
+
+    def fill_score(section, category):
+        score = calculate_score(category, st.session_state.dice)
+        st.session_state.scores[section][category] = score
+        st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
+        st.session_state.rolls_left = 2
+        st.session_state.keep = [False]*5
+        st.session_state.shake = [True]*5
+        st.session_state.turn += 1
 
     def calculate_score(category, dice):
-        # ... (省略: 前のバージョンの関数と同じ)
         counts = Counter(dice)
         sorted_dice = sorted(dice)
         
@@ -310,54 +249,51 @@ if auth_status:
         if category == "yacht":
             return 50 if 5 in counts.values() else 0
         return 0
-
-    def fill_score(section, category):
-        # ... (省略: 前のバージョンの関数と同じ)
-        score = calculate_score(category, st.session_state.dice)
-        st.session_state.scores[section][category] = score
-        st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
-        st.session_state.rolls_left = 2
-        st.session_state.keep = [False]*5
-        st.session_state.shake = [True]*5
-        st.session_state.turn += 1
-
+    
     def get_total_score():
-        # ... (省略: 前のバージョンの関数と同じ)
         upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
         bonus = 35 if upper_total >= 63 else 0
         lower_total = sum(s for s in st.session_state.scores["lower"].values() if s is not None)
         return upper_total + bonus + lower_total
 
-    # --- サイコロ表示（タップでキープ） ---
+
+    # --- サイコロ表示（チェックボックスをサイコロの見た目にする） ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     st.markdown("<div class='dice-grid'>", unsafe_allow_html=True)
     
     cols = st.columns(5)
     for i, col in enumerate(cols):
+        # チェックボックスが変更されたときの処理
+        def handle_keep_change(index):
+            # チェックボックスの値（True/False）をセッションステートに反映
+            st.session_state.keep[index] = st.session_state[f"keep_{index}"]
+
         with col:
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            label = "✅ KEEP" if st.session_state.keep[i] else "タップでKEEP"
+            label_text = "✅ KEEP" if st.session_state.keep[i] else "タップでKEEP"
             
-            # 1. タップ可能なサイコロの見た目を表示
-            # JSがこのdivを検知し、クリックイベントを裏側のチェックボックスに転送します
-            st.markdown(f"""
-            <div class='dice-tap-area'>
-                <div class='dice {shake_class} {kept_class}'>
-                    <div>{dice_faces[st.session_state.dice[i]]}</div>
-                    <div class='dice-label'>{label}</div>
-                </div>
+            # チェックボックスのラベルとしてサイコロの見た目を渡す
+            dice_html = f"""
+            <div class='dice {shake_class} {kept_class}'>
+                <div>{dice_faces[st.session_state.dice[i]]}</div>
+                <div class='dice-label'>{label_text}</div>
             </div>
-            """, unsafe_allow_html=True)
+            """
             
-            # 2. 非表示のチェックボックスを配置（Streamlitの状態更新用）
-            # keyを直接使って値の変更をStreamlitに認識させます
-            st.checkbox("", key=f"keep_{i}", value=st.session_state.keep[i], label_visibility="collapsed")
-            # 注意: JSがこのチェックボックスを操作するため、Python側の状態操作は不要です
+            # st.checkboxを使用して、サイコロの見た目とタップロジックを両立させる
+            st.checkbox(
+                dice_html, 
+                key=f"keep_{i}", 
+                value=st.session_state.keep[i], 
+                on_change=handle_keep_change, 
+                args=(i,),
+                label_visibility="visible"
+            )
 
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # 振り直しボタン (省略)
+    # 振り直しボタン 
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
             roll_dice()
@@ -368,8 +304,6 @@ if auth_status:
     st.markdown("</div>", unsafe_allow_html=True)
 
     # --- スコア表（2カラム） ---
-    # ... (省略: スコアリングロジックは前のバージョンと同じ)
-    
     # 上段
     st.markdown("<div class='score-section'><div class='section-title'>🔢 数字カテゴリ</div>", unsafe_allow_html=True)
     
@@ -389,7 +323,7 @@ if auth_status:
                 with cols[col_idx]:
                     if st.session_state.scores["upper"][key] is None:
                         potential = calculate_score(key, st.session_state.dice)
-                        button_text = f"{label}\\n{potential}点" 
+                        button_text = f"{label}\n{potential}点" 
                         if st.button(button_text, key=f"u_{key}", use_container_width=True):
                             fill_score("upper", key)
                             st.rerun()
@@ -424,7 +358,7 @@ if auth_status:
                 with cols[col_idx]:
                     if st.session_state.scores["lower"][key] is None:
                         potential = calculate_score(key, st.session_state.dice)
-                        button_text = f"{emoji} {label}\\n{potential}点"
+                        button_text = f"{emoji} {label}\n{potential}点"
                         if st.button(button_text, key=f"l_{key}", use_container_width=True):
                             fill_score("lower", key)
                             st.rerun()
@@ -442,11 +376,10 @@ if auth_status:
     </div>
     """, unsafe_allow_html=True)
 
-    # ... (省略: イースターエッグとゲーム終了ロジック)
+    # ... (サイドバーとログインロジックは省略)
 
     # サイドバー
     with st.sidebar:
-        # ... (省略: ルールとログアウト)
         st.markdown("### 📖 ゲームルール")
         st.markdown("""
         **基本ルール**

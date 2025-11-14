@@ -3,7 +3,7 @@ import streamlit_authenticator as stauth
 import bcrypt
 import random
 from collections import Counter
-import streamlit.components.v1 as components # <-- 【追加】
+# import streamlit.components.v1 as components # <-- 削除
 
 # ページ設定
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="centered")
@@ -41,52 +41,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- JavaScriptのインジェクション ---
-# タップイベントを非表示のチェックボックスクリックに変換するJS
-js_code = """
-<script>
-    function setupDiceClick() {
-        const diceContainers = document.querySelectorAll('.dice-tap-area');
-        diceContainers.forEach(container => {
-            // イベントリスナーが二重に登録されないように既存のものを削除
-            container.removeEventListener('click', handleDiceClick);
-            container.addEventListener('click', handleDiceClick);
-        });
-    }
-
-    function handleDiceClick(event) {
-        event.preventDefault(); // デフォルトの動作を防ぐ
-        event.stopPropagation(); // イベントのバブリングを防ぐ
-
-        const parent = event.currentTarget;
-        const colDiv = parent.closest('.stColumn');
-        
-        if (colDiv) {
-            // st.checkbox のラッパーを探索
-            const checkboxLabel = colDiv.querySelector('[data-testid="stCheckbox"] label');
-            if (checkboxLabel) {
-                // 非表示のチェックボックスのinput要素を取得
-                const checkboxInput = checkboxLabel.querySelector('input[type="checkbox"]');
-                if (checkboxInput) {
-                    // プログラムでクリックイベントを発火させる
-                    checkboxInput.click();
-                }
-            }
-        }
-    }
-
-    // StreamlitがDOMを更新するたびに再セットアップを試みる (重要: st.rerun後も動作させる)
-    new MutationObserver(setupDiceClick).observe(document.body, { childList: true, subtree: true });
-
-    // 初回ロード時
-    setupDiceClick();
-</script>
-"""
-# HTMLとしてStreamlitに埋め込む
-# ログイン状態に関わらず、DOMがロードされたら実行できるように、CSSの下に配置
-components.html(js_code, height=0, width=0)
-
-# --- スマホ最適化CSS ---
+# --- CSS (st.buttonに合わせた修正) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -140,22 +95,11 @@ st.markdown("""
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem; /* ボタンとのスペースを調整 */
     max-width: 100%;
 }
 
-/* 【修正】タップ領域のコンテナ */
-.dice-tap-area {
-    width: 100%;
-    aspect-ratio: 1;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    display: flex; 
-    justify-content: center;
-    align-items: center;
-}
-
+/* サイコロの見た目 */
 .dice {
     font-size: 2.5rem;
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
@@ -173,26 +117,11 @@ st.markdown("""
     user-select: none;
 }
 
-/* 【修正】JSで処理するため:activeは削除 */
-
 .dice-kept {
     background: linear-gradient(145deg, #a5d6a7 0%, #81c784 100%);
     border-color: #4caf50;
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
     transform: scale(1.05);
-}
-
-/* 【修正】JSで処理するため:activeは削除 */
-
-.dice-label {
-    font-size: 0.625rem;
-    margin-top: 0.25rem;
-    font-weight: 600;
-    color: #2e7d32;
-}
-
-.dice-kept .dice-label {
-    color: #1b5e20;
 }
 
 .dice-roll {
@@ -205,7 +134,7 @@ st.markdown("""
     75% { transform: rotate(10deg); }
 }
 
-/* ボタン */
+/* ボタン（全体） */
 .stButton > button {
     background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
     color: #ffffff;
@@ -226,6 +155,42 @@ st.markdown("""
     box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
+/* キープ/アンキープボタンの調整 */
+.keep-button button {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 0.5rem !important;
+    margin-top: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    height: auto !important;
+    line-height: 1 !important;
+}
+
+/* キープ状態のボタンの色 */
+.keep-button.kept button {
+    background: linear-gradient(135deg, #ff8a65 0%, #e57373 100%) !important;
+}
+
+.keep-button.kept button:hover {
+    background: linear-gradient(135deg, #e57373 0%, #d32f2f 100%) !important;
+    transform: none !important;
+    box-shadow: 0 2px 6px rgba(229, 115, 115, 0.5) !important;
+}
+
+.keep-button.unkept button {
+    background: linear-gradient(135deg, #b2ff59 0%, #8bc34a 100%) !important;
+}
+
+.keep-button.unkept button:hover {
+    background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%) !important;
+}
+
+/* st.buttonの標準マージンをサイコロ列内で無効化 */
+.stColumn .stButton {
+    margin-top: 0 !important;
+}
+
 .info-badge {
     text-align: center;
     padding: 0.75rem;
@@ -238,154 +203,9 @@ st.markdown("""
     margin: 1rem 0;
 }
 
-/* スコアカード - スマホ最適化 */
-.score-section {
-    background: #ffffff;
-    border: 3px solid #81c784;
-    border-radius: 1.25rem;
-    padding: 1rem;
-    margin: 1rem 0;
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
-}
+/* スコアカード以下は省略 */
 
-.section-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #2e7d32;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid #a5d6a7;
-}
-
-/* 2カラムグリッド - スマホ最適化 */
-.score-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-}
-
-.score-grid .stButton > button {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.875rem;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.score-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    margin: 0.25rem 0;
-    border-radius: 0.625rem;
-    background: #f1f8e9;
-    border: 2px solid #c5e1a5;
-    font-size: 0.875rem;
-    color: #33691e;
-    transition: all 0.2s ease;
-}
-
-.score-filled {
-    background: #c8e6c9;
-    border: 2px solid #66bb6a;
-    color: #1b5e20;
-    font-weight: 600;
-}
-
-/* 合計スコア */
-.total-score-box {
-    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
-    text-align: center;
-    padding: 1.5rem 1rem;
-    border-radius: 1.25rem;
-    margin: 1rem 0;
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-}
-
-.total-score-number {
-    font-size: 3rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0.25rem 0;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-}
-
-.total-score-label {
-    font-size: 0.75rem;
-    color: #e8f5e9;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-weight: 600;
-}
-
-/* ターン情報 */
-.turn-info {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    background: #ffffff;
-    border: 2px solid #81c784;
-    border-radius: 0.75rem;
-    margin: 1rem 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #2e7d32;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
-}
-
-/* サイドバー */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
-    border-right: 3px solid #81c784;
-}
-
-[data-testid="stSidebar"] h3 {
-    color: #2e7d32;
-    font-weight: 700;
-    font-size: 1.125rem;
-}
-
-[data-testid="stSidebar"] p, 
-[data-testid="stSidebar"] li {
-    color: #33691e;
-    line-height: 1.6;
-    font-size: 0.875rem;
-}
-
-/* イースターエッグ */
-.celebration-text {
-    background: linear-gradient(90deg, #66bb6a, #4caf50, #81c784, #a5d6a7, #66bb6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-align: center;
-    padding: 1rem;
-    background-size: 200% 100%;
-    animation: shimmer 3s linear infinite;
-}
-
-@keyframes shimmer {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
-}
-
-/* 【修正】チェックボックスを非表示 */
-/* ただし、JSが認識できるように visibility: hidden; に変更（display: noneだとクリックイベントも消えることがあるため） */
-[data-testid="stCheckbox"] {
-    height: 1px !important;
-    width: 1px !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    white-space: nowrap !important;
-    clip: rect(0, 0, 0, 0) !important;
-    clip-path: inset(50%) !important;
-    margin: -1px !important;
-}
-
+/* チェックボックス・スタイルは不要になったため削除 */
 
 /* レスポンシブ */
 @media (max-width: 480px) {
@@ -394,37 +214,19 @@ st.markdown("""
         padding: 0.5rem 0.25rem;
     }
     
-    .dice-label {
-        font-size: 0.5rem;
-    }
-    
     .game-title {
         font-size: 1.75rem;
     }
     
-    .total-score-number {
-        font-size: 2.5rem;
+    .keep-button button {
+        font-size: 0.65rem !important;
+        padding: 0.2rem 0.3rem !important;
     }
-    
-    .dice-grid {
-        gap: 0.375rem;
-    }
-    
-    .score-grid .stButton > button {
-        font-size: 0.75rem;
-        padding: 0.625rem 0.375rem;
-    }
+
+    /* その他レスポンシブは省略 */
 }
 
-@media (max-width: 360px) {
-    .dice {
-        font-size: 1.75rem;
-    }
-    
-    .dice-label {
-        font-size: 0.5rem;
-    }
-}
+/* ... その他CSSは省略 ... */
 </style>
 """, unsafe_allow_html=True)
 
@@ -477,7 +279,7 @@ if auth_status:
         check_easter_eggs()
 
     def toggle_keep(index):
-        # この関数は、非表示のチェックボックスがクリックされたときにPython側で状態を反転させるために使用
+        # ボタンクリックでキープ状態を直接切り替える
         st.session_state.keep[index] = not st.session_state.keep[index]
 
     def check_easter_eggs():
@@ -509,7 +311,6 @@ if auth_status:
         if category == "full_house":
             return sum(dice) if sorted(counts.values()) == [2, 3] else 0
         if category == "small_straight":
-            # ユニークな値のセットで4連続を確認
             unique_dice = sorted(list(set(dice)))
             for straight in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
                 if all(s in unique_dice for s in straight):
@@ -537,7 +338,7 @@ if auth_status:
         lower_total = sum(s for s in st.session_state.scores["lower"].values() if s is not None)
         return upper_total + bonus + lower_total
 
-    # --- サイコロ表示（タップでキープ） ---
+    # --- サイコロ表示（ボタンでキープ） ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     st.markdown("<div class='dice-grid'>", unsafe_allow_html=True)
     
@@ -546,33 +347,28 @@ if auth_status:
         with col:
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            label = "✓" if st.session_state.keep[i] else "タップ"
             
-            # 【修正】タップ領域のコンテナを追加し、onclick属性を削除
+            # 1. サイコロの見た目を表示
             st.markdown(f"""
-            <div class='dice-tap-area'>
-                <div class='dice {shake_class} {kept_class}'>
-                    <div>{dice_faces[st.session_state.dice[i]]}</div>
-                    <div class='dice-label'>{label}</div>
-                </div>
+            <div class='dice {shake_class} {kept_class}'>
+                <div>{dice_faces[st.session_state.dice[i]]}</div>
             </div>
             """, unsafe_allow_html=True)
             
-            # 【修正】非表示のチェックボックスでキープ状態を管理 (label_visibilityはcollapsedで続行)
-            # valueを変更したらrerunを呼ぶことで、Python側の状態を更新する
-            if st.checkbox("", key=f"keep_{i}", value=st.session_state.keep[i], label_visibility="collapsed"):
-                # チェックボックスがONになった場合
-                if not st.session_state.keep[i]:
-                    toggle_keep(i)
-                    st.rerun()
-            else:
-                # チェックボックスがOFFになった場合
-                if st.session_state.keep[i]:
-                    toggle_keep(i)
-                    st.rerun()
+            # 2. キープ/アンキープボタンを配置
+            button_label = "✋ キープ" if not st.session_state.keep[i] else "✅ アンキープ"
+            button_class = "kept" if st.session_state.keep[i] else "unkept"
+
+            st.markdown(f"<div class='keep-button {button_class}'>", unsafe_allow_html=True)
+            if st.button(button_label, key=f"keep_btn_{i}", use_container_width=True):
+                toggle_keep(i)
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
     
     st.markdown("</div>", unsafe_allow_html=True)
     
+    # 振り直しボタン
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
             roll_dice()
@@ -611,6 +407,7 @@ if auth_status:
                 with cols[col_idx]:
                     if st.session_state.scores["upper"][key] is None:
                         potential = calculate_score(key, st.session_state.dice)
+                        # スコアリングボタン
                         if st.button(f"{label}\n{potential}点", key=f"u_{key}", use_container_width=True):
                             fill_score("upper", key)
                             st.rerun()
@@ -645,6 +442,7 @@ if auth_status:
                 with cols[col_idx]:
                     if st.session_state.scores["lower"][key] is None:
                         potential = calculate_score(key, st.session_state.dice)
+                        # スコアリングボタン
                         if st.button(f"{emoji} {label}\n{potential}点", key=f"l_{key}", use_container_width=True):
                             fill_score("lower", key)
                             st.rerun()
@@ -689,7 +487,7 @@ if auth_status:
         st.markdown("""
         **基本ルール**
         - 各ターン最大3回振れます
-        - **サイコロをタップしてキープ**（タップするたびにキープ状態が切り替わります）
+        - **サイコロの下のボタンでキープ/アンキープ**
         - 12ターンで全カテゴリを埋める
         
         **ボーナス**

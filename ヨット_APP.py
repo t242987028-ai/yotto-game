@@ -90,24 +90,25 @@ st.markdown("""
     box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
 }
 
-/* dice-gridは使用しないため、削除または無視 */
-/* 代わりにst.columnsでレイアウトする */
+.dice-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
 
 .dice {
-    /* CSSを調整して、st.columnの中で適切なサイズになるようにする */
     font-size: 3rem;
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 0.75rem 0.5rem;
-    width: 17%;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 1rem 0.5rem;
+    display: block;
+    width: 100%;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .dice-kept {
@@ -127,28 +128,7 @@ st.markdown("""
     75% { transform: rotate(10deg); }
 }
 
-/* キープボタンのスタイル調整 */
-/* 5つのカラムが並ぶため、ボタンを小さくして対応 */
-div[data-testid="column"] > div > div > div > button {
-    font-size: 0.75rem !important;
-    padding: 0.4rem 0.2rem !important;
-    min-height: 35px !important;
-    width: 17% !important; /* カラム幅いっぱいに */
-    background: #f1f8e9 !important;
-    border: 2px solid #c5e1a5 !important;
-    color: #2e7d32 !important;
-    border-radius: 0.5rem !important;
-    box-shadow: none !important;
-    margin-top: 0.5rem;
-}
-
-div[data-testid="column"] > div > div > div > button:hover {
-    background: #dcedc8 !important;
-    border-color: #aed581 !important;
-    transform: none !important;
-}
-
-/* ロールボタンのスタイル（通常ボタン） */
+/* ボタン */
 .stButton > button {
     background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
     color: #ffffff;
@@ -161,7 +141,6 @@ div[data-testid="column"] > div > div > div > button:hover {
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
-    margin-top: 1rem;
 }
 
 .stButton > button:hover {
@@ -268,6 +247,18 @@ div[data-testid="column"] > div > div > div > button:hover {
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
 }
 
+/* チェックボックス */
+.stCheckbox {
+    display: flex;
+    justify-content: center;
+}
+
+.stCheckbox > label {
+    font-size: 0.8125rem;
+    color: #2e7d32 !important;
+    font-weight: 600;
+}
+
 /* サイドバー */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
@@ -305,38 +296,23 @@ div[data-testid="column"] > div > div > div > button:hover {
     100% { background-position: 200% 50%; }
 }
 
-/* レスポンシブ調整 */
-@media (max-width: 640px) {
-    .dice {
-        font-size: 2.5rem;
-        padding: 0.5rem 0.25rem;
-    }
-    
-    .game-title {
-        font-size: 2rem;
-    }
-    
-    div[data-testid="column"] > div > div > div > button {
-        font-size: 0.65rem !important;
-        padding: 0.3rem 0.1rem !important;
-        min-height: 30px !important;
-    }
-}
-
+/* レスポンシブ */
 @media (max-width: 480px) {
     .dice {
-        font-size: 2rem;
-        padding: 0.4rem 0.2rem;
+        font-size: 2.5rem;
+        padding: 0.875rem 0.375rem;
     }
     
     .game-title {
-        font-size: 1.75rem;
+        font-size: 2rem;
     }
     
-    div[data-testid="column"] > div > div > div > button {
-        font-size: 0.6rem !important;
-        padding: 0.25rem 0.05rem !important;
-        min-height: 28px !important;
+    .total-score-number {
+        font-size: 2.5rem;
+    }
+    
+    .dice-grid {
+        gap: 0.5rem;
     }
 }
 </style>
@@ -390,9 +366,6 @@ if auth_status:
         st.session_state.rolls_left -= 1
         check_easter_eggs()
 
-    def toggle_keep(index):
-        st.session_state.keep[index] = not st.session_state.keep[index]
-
     def check_easter_eggs():
         dice = st.session_state.dice
         
@@ -422,16 +395,10 @@ if auth_status:
         if category == "full_house":
             return sum(dice) if sorted(counts.values()) == [2, 3] else 0
         if category == "small_straight":
-            # set(dice)の長さが5以上（重複を除くと4個以上のユニークな数字）
-            if len(set(dice)) >= 4:
-                # 順列チェック（サブセットとして1234, 2345, 3456のいずれかを含むか）
-                unique_dice = set(dice)
-                if all(x in unique_dice for x in [1,2,3,4]) or \
-                   all(x in unique_dice for x in [2,3,4,5]) or \
-                   all(x in unique_dice for x in [3,4,5,6]):
+            for i in range(2):
+                if sorted_dice[i:i+4] in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
                     return 15
             return 0
-            
         if category == "large_straight":
             return 30 if sorted_dice in [[1,2,3,4,5], [2,3,4,5,6]] else 0
         if category == "yacht":
@@ -441,7 +408,6 @@ if auth_status:
     def fill_score(section, category):
         score = calculate_score(category, st.session_state.dice)
         st.session_state.scores[section][category] = score
-        # ターン終了後のサイコロの初期化と振り直しを分離（一連の動作として表現）
         st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
         st.session_state.rolls_left = 2
         st.session_state.keep = [False]*5
@@ -457,31 +423,16 @@ if auth_status:
     # --- サイコロ表示 ---
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     
-    # ----------------------------------------------------
-    # 【修正箇所: サイコロとキープボタンをst.columns(5)で統合】
-    # ----------------------------------------------------
-    
-    # st.columns(5)を使用してサイコロとキープボタンを縦に並べる
     cols = st.columns(5)
-    
     for i, col in enumerate(cols):
         with col:
-            # 1. サイコロの表示 (HTML)
             shake_class = "dice-roll" if st.session_state.shake[i] else ""
             kept_class = "dice-kept" if st.session_state.keep[i] else ""
             st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-            
-            # 2. キープボタンの表示
-            button_label = "✓ キープ中" if st.session_state.keep[i] else "📌 キープ"
-            # use_container_width=TrueはボタンのスタイルCSSでオーバーライドされます
-            if st.button(button_label, key=f"keep_{i}", use_container_width=True):
-                toggle_keep(i)
-                st.rerun()
-
-    # ----------------------------------------------------
+            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
+            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
     
     if st.session_state.rolls_left > 0:
-        # ロールボタンはサイコロ/キープボタンの下に全体幅で配置
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
             roll_dice()
             st.rerun()
@@ -580,7 +531,7 @@ if auth_status:
         st.markdown("""
         **基本ルール**
         - 各ターン最大3回振れます
-        - サイコロを**キープボタン**で選択
+        - サイコロを選択してキープ可能
         - 12ターンで全カテゴリを埋める
         
         **ボーナス**
@@ -600,4 +551,3 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
-

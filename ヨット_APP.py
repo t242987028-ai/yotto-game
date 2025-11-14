@@ -102,7 +102,7 @@ st.markdown("""
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 1rem 0.5rem;
+    padding: 0.1rem 0.1rem;
     display: block;
     width: 100%;
     text-align: center;
@@ -551,3 +551,4 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+

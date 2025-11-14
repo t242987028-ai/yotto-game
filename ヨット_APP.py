@@ -28,7 +28,11 @@ authenticator = stauth.Authenticate(
     credentials=credentials,
     cookie_name="yacht_game",
     key="abcdef",
-    cookie_expiry_days=30
+    cookie_expiry_days=30,
+
+    # ← スマホ（特にiPhone Safari）対応
+    cookie_secure=False,
+    cookie_samesite="None"
 )
 
 try:
@@ -551,3 +555,4 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+

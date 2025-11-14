@@ -106,7 +106,7 @@ st.markdown("""
     border-radius: 0.75rem;
     padding: 0.75rem 0.5rem;
     width: 18%;
-    height: 50%;
+    height: 40%;
     aspect-ratio: 1;
     display: flex;
     align-items: center;
@@ -608,6 +608,7 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+
 
 
 

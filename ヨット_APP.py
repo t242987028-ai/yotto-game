@@ -5,7 +5,6 @@ import random
 from collections import Counter
 
 # ページ設定
-# 【変更点1】Viewportを最適化（必須）
 st.set_page_config(page_title="🎲 ヨットダイス", page_icon="🎲", layout="centered")
 
 # --- パスワードハッシュ化関数 ---
@@ -54,67 +53,11 @@ st.markdown("""
     background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
 }
 
-/* --- 【最重要変更点2】強制的な縮小と中央配置 --- */
-/* Streamlitのメインブロックをターゲット */
-[data-testid="stVerticalBlock"] > div:first-child { 
-    /* st.containerでラップされた要素の親を対象とする */
-    width: 100%;
-    margin: 0 auto;
-    padding: 0 1rem; /* 左右の余白は維持 */
-}
-
-/* スマホでの縮小処理 */
-@media (max-width: 768px) {
-    /* 基準となるPCでの幅 (例: 600px) を想定し、現在のビューポート幅との比率でズーム */
-    /* これがPC版の「縮尺」を保ちながら全体を縮小する最も有効な方法です */
-    
-    [data-testid="stVerticalBlock"] > div:first-child { 
-        /* zoom: 0.7; など具体的な値を設定すると安定する場合があります */
-        /* calc(100vw / 600px) のように計算したいが、CSSで実装が複雑なため、
-           以下のように全体を中央に寄せ、サイズを固定して縮小に備えるのが現実的 */
-        
-        max-width: 600px; 
-        margin: 0 auto; 
-    }
-    
-    /* ズームの代替案：コンテンツ全体を包むStreamlitの最上位要素に直接適用 */
-    .main {
-        padding: 0;
-    }
-
-    /* ページのコンテンツ幅がスマホサイズになったら、ズームを適用する */
-    .main-container {
-        /* スマホで縦長になりすぎるのを防ぎ、PC版のサイズ感を保つ */
-        transform-origin: top center;
-        /* Viewport Width (vw)を基準に、コンテンツ幅を計算し縮小（近似値） */
-        /* 例: 400pxの画面で600pxのコンテンツを表示したい場合、400/600 = 0.666倍 */
-        /* 以下は、特定の環境で試す必要があるカスタムな調整です */
-        zoom: 0.8; /* 80%に縮小を試みる (最も安定しやすい値) */
-        -moz-transform: scale(0.8);
-        -moz-transform-origin: top center;
-    }
-    
-    /* フォントサイズのモバイル調整は、このズームアプローチでは削除または緩和します */
-    .dice {
-        font-size: 3rem; /* PC版のサイズを維持 */
-        padding: 1rem 0.5rem;
-    }
-}
-
-
 /* ヘッダー */
 .game-header {
     text-align: center;
     padding: 2rem 1rem 1.5rem;
 }
-/* ... その他のCSSは省略しますが、元のコードのCSSをそのまま使用します ... */
-/*
-以下に、元のコードから転記したCSSの残りの部分を続けます。
-ただし、モバイル調整（@media (max-width: 480px)）で、
-特にフォントサイズを縮小している部分は、
-上記のズーム処理と競合するため、**削除**または**緩和**することを推奨します。
-元のコードのCSSを完全に維持する場合、以下にそのまま続けます。
-*/
 
 .game-title {
     font-size: 2.5rem;
@@ -353,14 +296,30 @@ st.markdown("""
     100% { background-position: 200% 50%; }
 }
 
-/* 【元のモバイル調整の削除/緩和推奨】
-   今回はズーム処理に頼るため、この部分は不要（または緩和）です */
-/* @media (max-width: 480px) { ... } */
+/* レスポンシブ */
+@media (max-width: 480px) {
+    .dice {
+        font-size: 2.5rem;
+        padding: 0.875rem 0.375rem;
+    }
+    
+    .game-title {
+        font-size: 2rem;
+    }
+    
+    .total-score-number {
+        font-size: 2.5rem;
+    }
+    
+    .dice-grid {
+        gap: 0.5rem;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
-
 dice_faces = {1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅"}
+
 secret_messages = [
     "🎊 すごい！ヨットマスター！",
     "✨ 運命の一振り！",
@@ -371,206 +330,200 @@ secret_messages = [
 
 # --- ゲーム本体 ---
 if auth_status:
-    # 【変更点3】メインコンテンツを`st.container`でラップし、カスタムCSSのターゲットにする
-    with st.container():
-        st.markdown("<div class='main-container'>", unsafe_allow_html=True) # CSS用のラッパー
 
-        # ヘッダー
-        st.markdown(f"""
-        <div class='game-header'>
-            <div class='game-title'>🎲 ヨットダイス</div>
-            <div class='player-badge'>👤 {name}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    # ヘッダー
+    st.markdown(f"""
+    <div class='game-header'>
+        <div class='game-title'>🎲 ヨットダイス</div>
+        <div class='player-badge'>👤 {name}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        # --- 初期化 ---
-        if "dice" not in st.session_state:
-            st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
-            st.session_state.rolls_left = 2
-            st.session_state.keep = [False]*5
-            st.session_state.shake = [False]*5
-            st.session_state.turn = 1
-            st.session_state.easter_egg_found = []
-            
-            st.session_state.scores = {
-                "upper": {"1": None, "2": None, "3": None, "4": None, "5": None, "6": None},
-                "lower": {
-                    "choice": None, "four_of_kind": None, "full_house": None,
-                    "small_straight": None, "large_straight": None, "yacht": None
-                }
+    # --- 初期化 ---
+    if "dice" not in st.session_state:
+        st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
+        st.session_state.rolls_left = 2
+        st.session_state.keep = [False]*5
+        st.session_state.shake = [False]*5
+        st.session_state.turn = 1
+        st.session_state.easter_egg_found = []
+        
+        st.session_state.scores = {
+            "upper": {"1": None, "2": None, "3": None, "4": None, "5": None, "6": None},
+            "lower": {
+                "choice": None, "four_of_kind": None, "full_house": None,
+                "small_straight": None, "large_straight": None, "yacht": None
             }
+        }
 
-        def roll_dice():
-            for i in range(5):
-                if not st.session_state.keep[i]:
-                    st.session_state.dice[i] = random.randint(1, 6)
-                    st.session_state.shake[i] = True
-                else:
-                    st.session_state.shake[i] = False
-            st.session_state.rolls_left -= 1
-            check_easter_eggs()
+    def roll_dice():
+        for i in range(5):
+            if not st.session_state.keep[i]:
+                st.session_state.dice[i] = random.randint(1, 6)
+                st.session_state.shake[i] = True
+            else:
+                st.session_state.shake[i] = False
+        st.session_state.rolls_left -= 1
+        check_easter_eggs()
 
-        def check_easter_eggs():
-            dice = st.session_state.dice
-            
-            if all(d == 6 for d in dice) and "all_six" not in st.session_state.easter_egg_found:
-                st.session_state.easter_egg_found.append("all_six")
-                st.balloons()
-            
-            sorted_dice = sorted(dice)
-            if (sorted_dice == [1,2,3,4,5] or sorted_dice == [2,3,4,5,6]) and st.session_state.rolls_left == 2:
-                if "first_roll_straight" not in st.session_state.easter_egg_found:
-                    st.session_state.easter_egg_found.append("first_roll_straight")
-                    st.snow()
-            
-            if len(set(dice)) == 1 and "yacht_rolled" not in st.session_state.easter_egg_found:
-                st.session_state.easter_egg_found.append("yacht_rolled")
+    def check_easter_eggs():
+        dice = st.session_state.dice
+        
+        if all(d == 6 for d in dice) and "all_six" not in st.session_state.easter_egg_found:
+            st.session_state.easter_egg_found.append("all_six")
+            st.balloons()
+        
+        sorted_dice = sorted(dice)
+        if (sorted_dice == [1,2,3,4,5] or sorted_dice == [2,3,4,5,6]) and st.session_state.rolls_left == 2:
+            if "first_roll_straight" not in st.session_state.easter_egg_found:
+                st.session_state.easter_egg_found.append("first_roll_straight")
+                st.snow()
+        
+        if len(set(dice)) == 1 and "yacht_rolled" not in st.session_state.easter_egg_found:
+            st.session_state.easter_egg_found.append("yacht_rolled")
 
-        def calculate_score(category, dice):
-            counts = Counter(dice)
-            sorted_dice = sorted(dice)
-            
-            if category in ["1", "2", "3", "4", "5", "6"]:
-                return dice.count(int(category)) * int(category)
-            if category == "choice":
-                return sum(dice)
-            if category == "four_of_kind":
-                return sum(dice) if (4 in counts.values() or 5 in counts.values()) else 0
-            if category == "full_house":
-                return sum(dice) if sorted(counts.values()) == [2, 3] else 0
-            if category == "small_straight":
-                unique_dice = sorted(list(set(dice)))
-                for straight in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
-                    if all(s in unique_dice for s in straight):
-                        return 15
-                return 0
-            if category == "large_straight":
-                return 30 if sorted_dice in [[1,2,3,4,5], [2,3,4,5,6]] else 0
-            if category == "yacht":
-                return 50 if 5 in counts.values() else 0
+    def calculate_score(category, dice):
+        counts = Counter(dice)
+        sorted_dice = sorted(dice)
+        
+        if category in ["1", "2", "3", "4", "5", "6"]:
+            return dice.count(int(category)) * int(category)
+        if category == "choice":
+            return sum(dice)
+        if category == "four_of_kind":
+            return sum(dice) if (4 in counts.values() or 5 in counts.values()) else 0
+        if category == "full_house":
+            return sum(dice) if sorted(counts.values()) == [2, 3] else 0
+        if category == "small_straight":
+            for i in range(2):
+                if sorted_dice[i:i+4] in [[1,2,3,4], [2,3,4,5], [3,4,5,6]]:
+                    return 15
             return 0
+        if category == "large_straight":
+            return 30 if sorted_dice in [[1,2,3,4,5], [2,3,4,5,6]] else 0
+        if category == "yacht":
+            return 50 if 5 in counts.values() else 0
+        return 0
 
-        def fill_score(section, category):
-            score = calculate_score(category, st.session_state.dice)
-            st.session_state.scores[section][category] = score
-            st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
-            st.session_state.rolls_left = 2
-            st.session_state.keep = [False]*5
-            st.session_state.shake = [True]*5
-            st.session_state.turn += 1
+    def fill_score(section, category):
+        score = calculate_score(category, st.session_state.dice)
+        st.session_state.scores[section][category] = score
+        st.session_state.dice = [random.randint(1, 6) for _ in range(5)]
+        st.session_state.rolls_left = 2
+        st.session_state.keep = [False]*5
+        st.session_state.shake = [True]*5
+        st.session_state.turn += 1
 
-        def get_total_score():
-            upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
-            bonus = 35 if upper_total >= 63 else 0
-            lower_total = sum(s for s in st.session_state.scores["lower"].values() if s is not None)
-            return upper_total + bonus + lower_total
+    def get_total_score():
+        upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
+        bonus = 35 if upper_total >= 63 else 0
+        lower_total = sum(s for s in st.session_state.scores["lower"].values() if s is not None)
+        return upper_total + bonus + lower_total
 
-        # --- サイコロ表示 ---
-        st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
-        
-        cols = st.columns(5)
-        for i, col in enumerate(cols):
-            with col:
-                shake_class = "dice-roll" if st.session_state.shake[i] else ""
-                kept_class = "dice-kept" if st.session_state.keep[i] else ""
-                st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-                keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
-                st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
-        
-        if st.session_state.rolls_left > 0:
-            if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
-                roll_dice()
+    # --- サイコロ表示 ---
+    st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
+    
+    cols = st.columns(5)
+    for i, col in enumerate(cols):
+        with col:
+            shake_class = "dice-roll" if st.session_state.shake[i] else ""
+            kept_class = "dice-kept" if st.session_state.keep[i] else ""
+            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
+            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
+            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
+    
+    if st.session_state.rolls_left > 0:
+        if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
+            roll_dice()
+            st.rerun()
+    else:
+        st.markdown("<div class='info-badge'>✋ スコアを選択してください</div>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ターン情報
+    st.markdown(f"""
+    <div class='turn-info'>
+        <span>🎯 ターン {st.session_state.turn}/12</span>
+        <span>⏳ 残り {12 - st.session_state.turn}回</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- スコア表 ---
+    # 上段
+    st.markdown("<div class='score-section'><div class='section-title'>🔢 数字カテゴリ</div>", unsafe_allow_html=True)
+    
+    upper_labels = {
+        "1": "1️⃣ エース", "2": "2️⃣ デュース", "3": "3️⃣ トレイ",
+        "4": "4️⃣ フォー", "5": "5️⃣ ファイブ", "6": "6️⃣ シックス"
+    }
+    
+    for key, label in upper_labels.items():
+        if st.session_state.scores["upper"][key] is None:
+            potential = calculate_score(key, st.session_state.dice)
+            if st.button(f"{label} → {potential}点", key=f"u_{key}", use_container_width=True):
+                fill_score("upper", key)
                 st.rerun()
         else:
-            st.markdown("<div class='info-badge'>✋ スコアを選択してください</div>", unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点 ✓</span></div>", unsafe_allow_html=True)
+    
+    upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
+    bonus_text = "🎁 ボーナス達成 +35点!" if upper_total >= 63 else f"ボーナスまであと{63-upper_total}点"
+    st.markdown(f"<div class='score-item'><span><strong>小計</strong></span><span><strong>{upper_total}点</strong> ({bonus_text})</span></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-        # ターン情報
-        st.markdown(f"""
-        <div class='turn-info'>
-            <span>🎯 ターン {st.session_state.turn}/12</span>
-            <span>⏳ 残り {12 - st.session_state.turn}回</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # --- スコア表 ---
-        # 上段
-        st.markdown("<div class='score-section'><div class='section-title'>🔢 数字カテゴリ</div>", unsafe_allow_html=True)
-        
-        upper_labels = {
-            "1": "1️⃣ エース", "2": "2️⃣ デュース", "3": "3️⃣ トレイ",
-            "4": "4️⃣ フォー", "5": "5️⃣ ファイブ", "6": "6️⃣ シックス"
-        }
-        
-        for key, label in upper_labels.items():
-            if st.session_state.scores["upper"][key] is None:
-                potential = calculate_score(key, st.session_state.dice)
-                if st.button(f"{label} → {potential}点", key=f"u_{key}", use_container_width=True):
-                    fill_score("upper", key)
-                    st.rerun()
-            else:
-                st.markdown(f"<div class='score-item score-filled'><span>{label}</span><span>{st.session_state.scores['upper'][key]}点 ✓</span></div>", unsafe_allow_html=True)
-        
-        upper_total = sum(s for s in st.session_state.scores["upper"].values() if s is not None)
-        bonus_text = "🎁 ボーナス達成 +35点!" if upper_total >= 63 else f"ボーナスまであと{63-upper_total}点"
-        st.markdown(f"<div class='score-item'><span><strong>小計</strong></span><span><strong>{upper_total}点</strong> ({bonus_text})</span></div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # 下段
-        st.markdown("<div class='score-section'><div class='section-title'>🎯 役カテゴリ</div>", unsafe_allow_html=True)
-        
-        lower_labels = {
-            "choice": ("🎲", "チョイス"),
-            "four_of_kind": ("4️⃣", "フォーカード"),
-            "full_house": ("🏠", "フルハウス"),
-            "small_straight": ("➡️", "Sストレート"),
-            "large_straight": ("⏩", "Lストレート"),
-            "yacht": ("⛵", "ヨット")
-        }
-        
-        for key, (emoji, label) in lower_labels.items():
-            if st.session_state.scores["lower"][key] is None:
-                potential = calculate_score(key, st.session_state.dice)
-                if st.button(f"{emoji} {label} → {potential}点", key=f"l_{key}", use_container_width=True):
-                    fill_score("lower", key)
-                    st.rerun()
-            else:
-                st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点 ✓</span></div>", unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # 合計スコア
-        total = get_total_score()
-        st.markdown(f"""
-        <div class='total-score-box'>
-            <div class='total-score-label'>Total Score</div>
-            <div class='total-score-number'>{total}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # イースターエッグ表示
-        if st.session_state.easter_egg_found:
-            if "all_six" in st.session_state.easter_egg_found:
-                st.markdown("<div class='celebration-text'>🎉 全部6！完璧なロール！</div>", unsafe_allow_html=True)
-            if "first_roll_straight" in st.session_state.easter_egg_found:
-                st.success("⚡ 一発ストレート！神業です！")
-            if "yacht_rolled" in st.session_state.easter_egg_found:
-                st.markdown(f"<div class='celebration-text'>{random.choice(secret_messages)}</div>", unsafe_allow_html=True)
-
-        # ゲーム終了
-        all_filled = all(s is not None for s in st.session_state.scores["upper"].values()) and \
-                     all(s is not None for s in st.session_state.scores["lower"].values())
-        
-        if all_filled:
-            st.success(f"🎉 ゲーム終了！最終スコア: {total}点")
-            if st.button("🔄 新しいゲームを開始", use_container_width=True):
-                for key in ["dice", "rolls_left", "keep", "shake", "turn", "scores", "easter_egg_found"]:
-                    if key in st.session_state:
-                        del st.session_state[key]
+    # 下段
+    st.markdown("<div class='score-section'><div class='section-title'>🎯 役カテゴリ</div>", unsafe_allow_html=True)
+    
+    lower_labels = {
+        "choice": ("🎲", "チョイス"),
+        "four_of_kind": ("4️⃣", "フォーカード"),
+        "full_house": ("🏠", "フルハウス"),
+        "small_straight": ("➡️", "Sストレート"),
+        "large_straight": ("⏩", "Lストレート"),
+        "yacht": ("⛵", "ヨット")
+    }
+    
+    for key, (emoji, label) in lower_labels.items():
+        if st.session_state.scores["lower"][key] is None:
+            potential = calculate_score(key, st.session_state.dice)
+            if st.button(f"{emoji} {label} → {potential}点", key=f"l_{key}", use_container_width=True):
+                fill_score("lower", key)
                 st.rerun()
-        
-        st.markdown("</div>", unsafe_allow_html=True) # .main-containerの終了
+        else:
+            st.markdown(f"<div class='score-item score-filled'><span>{emoji} {label}</span><span>{st.session_state.scores['lower'][key]}点 ✓</span></div>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 合計スコア
+    total = get_total_score()
+    st.markdown(f"""
+    <div class='total-score-box'>
+        <div class='total-score-label'>Total Score</div>
+        <div class='total-score-number'>{total}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # イースターエッグ表示
+    if st.session_state.easter_egg_found:
+        if "all_six" in st.session_state.easter_egg_found:
+            st.markdown("<div class='celebration-text'>🎉 全部6！完璧なロール！</div>", unsafe_allow_html=True)
+        if "first_roll_straight" in st.session_state.easter_egg_found:
+            st.success("⚡ 一発ストレート！神業です！")
+        if "yacht_rolled" in st.session_state.easter_egg_found:
+            st.markdown(f"<div class='celebration-text'>{random.choice(secret_messages)}</div>", unsafe_allow_html=True)
+
+    # ゲーム終了
+    all_filled = all(s is not None for s in st.session_state.scores["upper"].values()) and \
+                 all(s is not None for s in st.session_state.scores["lower"].values())
+    
+    if all_filled:
+        st.success(f"🎉 ゲーム終了！最終スコア: {total}点")
+        if st.button("🔄 新しいゲームを開始", use_container_width=True):
+            for key in ["dice", "rolls_left", "keep", "shake", "turn", "scores", "easter_egg_found"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
 
     # サイドバー
     with st.sidebar:

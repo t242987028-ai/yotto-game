@@ -47,6 +47,17 @@ username = st.session_state.get("username")
 # --- 明るい緑・白・クリーム色のナチュラルCSS ---
 st.markdown("""
 <style>
+@media screen and (max-width: 600px) {
+  .block-container {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+}
+</style>
+
+""", unsafe_allow_html=True)
+st.markdown("""
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 * {
@@ -555,5 +566,6 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+
 
 

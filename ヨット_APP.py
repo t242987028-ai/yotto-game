@@ -338,6 +338,11 @@ if auth_status:
         <div class='player-badge'>👤 {name}</div>
     </div>
     """, unsafe_allow_html=True)
+    for i, col in enumerate(cols):
+        with col:
+            shake_class = "dice-roll" if st.session_state.shake[i] else ""
+            kept_class = "dice-kept" if st.session_state.keep[i] else ""
+            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
 
     # --- 初期化 ---
     if "dice" not in st.session_state:

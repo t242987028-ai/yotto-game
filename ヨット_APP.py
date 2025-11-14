@@ -40,7 +40,7 @@ name = st.session_state.get("name")
 auth_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
-# --- CSS (スマホ最適化) ---
+# --- CSS (究極のスマホ最適化) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -93,14 +93,14 @@ st.markdown("""
 .dice-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.5rem;
+    gap: 0.3rem; /* ギャップをさらに狭く */
     margin-bottom: 0.5rem;
     max-width: 100%;
 }
 
 /* サイコロの見た目 */
 .dice {
-    font-size: 2.5rem;
+    font-size: 2.2rem; /* サイコロの数字も少し小さく */
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
@@ -112,8 +112,6 @@ st.markdown("""
     width: 100%;
     aspect-ratio: 1;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
-    transition: all 0.3s ease;
-    user-select: none;
 }
 
 .dice-kept {
@@ -121,16 +119,6 @@ st.markdown("""
     border-color: #4caf50;
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3), 0 6px 16px rgba(76, 175, 80, 0.4);
     transform: scale(1.05);
-}
-
-.dice-roll {
-    animation: diceRoll 0.5s ease;
-}
-
-@keyframes diceRoll {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-10deg); }
-    75% { transform: rotate(10deg); }
 }
 
 /* --- 全体ボタン --- */
@@ -143,31 +131,28 @@ st.markdown("""
     font-weight: 600;
     width: 100%;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-    transition: all 0.2s ease;
-    font-family: 'Inter', sans-serif;
     font-size: 1rem;
 }
 
-/* --- キープ/アンキープボタン (より小さく) --- */
+/* --- キープ/アンキープボタン (極小化) --- */
 .keep-button button {
-    /* 【修正】ボタンの縦幅とフォントサイズを削減 */
-    padding: 0.2rem 0.4rem !important; /* 縦パディングを大幅削減 */
-    font-size: 0.65rem !important;      /* フォントサイズを小さく */
-    font-weight: 600 !important;       /* 文字を強調 */
-    border-radius: 0.5rem !important;
-    margin-top: 0.25rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    /* 【修正】極限まで小さく */
+    padding: 0.1rem 0.2rem !important; /* 縦パディングをさらに削減 */
+    font-size: 0.55rem !important;      /* フォントサイズを最小化 */
+    font-weight: 700 !important;       /* 文字を強調 */
+    border-radius: 0.3rem !important; /* 角を小さく */
+    margin-top: 0.15rem; /* マージンを削減 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     height: auto !important;
-    line-height: 1 !important;
+    line-height: 1.2 !important; /* 行間を詰める */
 }
 
-/* キープ状態のボタンの色 */
 .keep-button.kept button {
-    background: linear-gradient(135deg, #ff8a65 0%, #e57373 100%) !important; /* 赤系 */
+    background: linear-gradient(135deg, #ff8a65 0%, #e57373 100%) !important;
 }
 
 .keep-button.unkept button {
-    background: linear-gradient(135deg, #b2ff59 0%, #8bc34a 100%) !important; /* 黄緑系 */
+    background: linear-gradient(135deg, #b2ff59 0%, #8bc34a 100%) !important;
 }
 
 /* st.buttonの標準マージンをサイコロ列内で無効化 */
@@ -175,44 +160,22 @@ st.markdown("""
     margin-top: 0 !important;
 }
 
-.info-badge {
-    text-align: center;
-    padding: 0.75rem;
-    background: #fff3e0;
-    border: 2px solid #ffb74d;
-    border-radius: 0.625rem;
-    color: #e65100;
-    font-weight: 600;
-    font-size: 0.875rem;
-    margin: 1rem 0;
-}
-
-/* スコアカード - スマホ最適化 */
+/* スコアカード */
 .score-section {
-    background: #ffffff;
-    border: 3px solid #81c784;
-    border-radius: 1.25rem;
     padding: 1rem;
     margin: 1rem 0;
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
 }
 
-.section-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #2e7d32;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid #a5d6a7;
-}
-
-/* 役のスコアリングボタン (より小さく) */
-.score-grid .stButton > button {
-    /* 【修正】スコアリングボタンの縦幅とフォントサイズを削減 */
-    padding: 0.4rem 0.5rem !important; /* 縦パディングを削減 */
-    font-size: 0.75rem !important;      /* フォントサイズを小さく */
+/* 役のスコアリングボタン (極小化) */
+/* スコアボタンを縦に詰めるために stButton の設定を上書き */
+.stColumn .stButton:nth-child(2) > button, /* スコアボタン全体 */
+.stColumn .stButton:nth-child(1) > button {
+    padding: 0.5rem 0.5rem !important; /* 縦パディングをさらに削減 */
+    font-size: 0.7rem !important;      /* フォントサイズを小さく */
+    line-height: 1.2 !important;       /* 2行表示のための行間調整 */
+    height: 50px !important;           /* 高さを固定して2行テキストを収める */
     text-align: left;
-    white-space: nowrap;
+    white-space: pre-wrap;             /* テキストを折り返す */
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -221,46 +184,32 @@ st.markdown("""
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1rem;
-    margin: 0.25rem 0;
-    border-radius: 0.625rem;
-    background: #f1f8e9;
-    border: 2px solid #c5e1a5;
-    font-size: 0.875rem;
-    color: #33691e;
-    transition: all 0.2s ease;
+    padding: 0.5rem 0.75rem; /* 項目を小さく */
+    margin: 0.2rem 0;
+    font-size: 0.8rem; /* フォントサイズを小さく */
 }
-
-.score-filled {
-    background: #c8e6c9;
-    border: 2px solid #66bb6a;
-    color: #1b5e20;
-    font-weight: 600;
-}
-
-/* 合計スコア以下は省略 */
 
 /* レスポンシブ */
 @media (max-width: 480px) {
     .dice {
-        font-size: 2rem;
-        padding: 0.5rem 0.25rem;
+        font-size: 1.8rem;
+        padding: 0.3rem 0.1rem;
     }
     
     .game-title {
-        font-size: 1.75rem;
+        font-size: 1.6rem;
     }
     
-    /* キープボタンの最終調整 */
     .keep-button button {
-        font-size: 0.6rem !important;
-        padding: 0.15rem 0.3rem !important;
+        font-size: 0.5rem !important;
+        padding: 0.1rem 0.2rem !important;
     }
     
-    /* スコアボタンの最終調整 */
-    .score-grid .stButton > button {
-        font-size: 0.7rem !important;
-        padding: 0.3rem 0.3rem !important;
+    .stColumn .stButton:nth-child(2) > button,
+    .stColumn .stButton:nth-child(1) > button {
+        font-size: 0.65rem !important;
+        padding: 0.4rem 0.2rem !important;
+        height: 40px !important; /* 狭い画面ではさらに高さを削減 */
     }
 }
 </style>
@@ -315,7 +264,6 @@ if auth_status:
         check_easter_eggs()
 
     def toggle_keep(index):
-        # ボタンクリックでキープ状態を直接切り替える
         st.session_state.keep[index] = not st.session_state.keep[index]
 
     def check_easter_eggs():
@@ -445,7 +393,9 @@ if auth_status:
                         potential = calculate_score(key, st.session_state.dice)
                         # スコアリングボタン
                         st.markdown("<div class='score-grid'>", unsafe_allow_html=True) # CSS適用のため
-                        if st.button(f"{label}\n{potential}点", key=f"u_{key}", use_container_width=True):
+                        # ボタンのテキストを2行に強制
+                        button_text = f"{label}\\n{potential}点" 
+                        if st.button(button_text, key=f"u_{key}", use_container_width=True):
                             fill_score("upper", key)
                             st.rerun()
                         st.markdown("</div>", unsafe_allow_html=True)
@@ -482,7 +432,9 @@ if auth_status:
                         potential = calculate_score(key, st.session_state.dice)
                         # スコアリングボタン
                         st.markdown("<div class='score-grid'>", unsafe_allow_html=True) # CSS適用のため
-                        if st.button(f"{emoji} {label}\n{potential}点", key=f"l_{key}", use_container_width=True):
+                        # ボタンのテキストを2行に強制
+                        button_text = f"{emoji} {label}\\n{potential}点"
+                        if st.button(button_text, key=f"l_{key}", use_container_width=True):
                             fill_score("lower", key)
                             st.rerun()
                         st.markdown("</div>", unsafe_allow_html=True)

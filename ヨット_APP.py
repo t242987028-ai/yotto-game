@@ -424,13 +424,37 @@ if auth_status:
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     
     cols = st.columns(5)
-    for i, col in enumerate(cols):
-        with col:
-            shake_class = "dice-roll" if st.session_state.shake[i] else ""
-            kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
-            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
-            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
+    
+    # --- サイコロ表示 ---
+st.markdown("<div class='dice-container'><div class='dice-grid'>", unsafe_allow_html=True)
+    
+cols = st.columns(5) # 5個横並び
+    
+for i, col in enumerate(cols):
+    with col:
+        # 1. サイコロの値でボタンを生成
+        if st.button(dice_faces[st.session_state.dice[i]], 
+                     key=f"dice_{i}", 
+                     use_container_width=True,
+                     on_click=toggle_keep, 
+                     args=(i,)):
+            st.rerun() 
+        
+        # 2. カスタムCSSクラスを適用するためのJavaScript（ボタンをサイコロとして整形し、キープ状態を反映）
+        shake_class = "dice-roll" if st.session_state.shake[i] else ""
+        kept_class = "dice-kept" if st.session_state.keep[i] else ""
+        st.markdown(f"""
+        <script>
+            const button = document.querySelector('[data-testid="stButton"] button[key="dice_{i}"]');
+            if (button) {{
+                button.classList.add('dice-button'); // 新しいCSSクラス
+                if ('{kept_class}') {{ button.classList.add('{kept_class}'); }}
+                if ('{shake_class}') {{ button.classList.add('{shake_class}'); }}
+            }}
+        </script>
+        """, unsafe_allow_html=True)
+    
+st.markdown("</div>", unsafe_allow_html=True)
     
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
@@ -551,3 +575,4 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+

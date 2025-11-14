@@ -17,12 +17,16 @@ def hash_password(password):
 names = ["T", "N"]
 usernames = ["Takahito", "Nanako"]
 # 注意: 実際に実行する際は以下のパスワードをハッシュ化する必要があります。
-# デモ用にハッシュ化されたパスワードを仮置き
+# 生パスワードのリスト
 passwords = ["0628", "0408"]
+
+# ★★★ 修正箇所: 生パスワードをハッシュ化し、リストに格納 ★★★
+hashed_passwords = [hash_password(p) for p in passwords]
 
 credentials = {
     "usernames": {
-        usernames[0]: {"name": names[0], "password": hashed_passwords[0]},
+        # ★ hashed_passwords を使用するように修正 ★
+        usernames[0]: {"name": names[0], "password": hashed_passwords[0]}, 
         usernames[1]: {"name": names[1], "password": hashed_passwords[1]}
     }
 }
@@ -553,5 +557,3 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
-
-

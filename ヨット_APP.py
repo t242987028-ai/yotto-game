@@ -102,9 +102,9 @@ st.markdown("""
     background: linear-gradient(145deg, #fffde7 0%, #fff9c4 100%);
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
-    padding: 0.1rem 0.1rem;
+    padding: 1rem 0.5rem;
     display: block;
-    width: 90px;
+    width: 100%;
     text-align: center;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3), inset 0 -2px 4px rgba(251, 192, 45, 0.1);
     transition: all 0.3s ease;
@@ -338,11 +338,6 @@ if auth_status:
         <div class='player-badge'>👤 {name}</div>
     </div>
     """, unsafe_allow_html=True)
-    for i, col in enumerate(cols):
-        with col:
-            shake_class = "dice-roll" if st.session_state.shake[i] else ""
-            kept_class = "dice-kept" if st.session_state.keep[i] else ""
-            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
 
     # --- 初期化 ---
     if "dice" not in st.session_state:
@@ -429,6 +424,13 @@ if auth_status:
     st.markdown("<div class='dice-container'>", unsafe_allow_html=True)
     
     cols = st.columns(5)
+    for i, col in enumerate(cols):
+        with col:
+            shake_class = "dice-roll" if st.session_state.shake[i] else ""
+            kept_class = "dice-kept" if st.session_state.keep[i] else ""
+            st.markdown(f"<div class='dice {shake_class} {kept_class}'>{dice_faces[st.session_state.dice[i]]}</div>", unsafe_allow_html=True)
+            keep_label = "🔓 キープ" if not st.session_state.keep[i] else "✅ キープ中"
+            st.session_state.keep[i] = st.checkbox(keep_label, key=f"keep_{i}", value=st.session_state.keep[i])
     
     if st.session_state.rolls_left > 0:
         if st.button(f"🎲 振り直す (残り {st.session_state.rolls_left}回)", key="roll", use_container_width=True):
@@ -549,12 +551,3 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
-
-
-
-
-
-
-
-
-

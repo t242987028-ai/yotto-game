@@ -100,7 +100,7 @@ st.markdown("""
     border: 3px solid #fbc02d;
     border-radius: 0.75rem;
     padding: 0.75rem 0.5rem;
-    width: 100%; /* カラム幅いっぱいに */
+    width: 17%;
     aspect-ratio: 1;
     display: flex;
     align-items: center;
@@ -133,7 +133,7 @@ div[data-testid="column"] > div > div > div > button {
     font-size: 0.75rem !important;
     padding: 0.4rem 0.2rem !important;
     min-height: 35px !important;
-    width: 100% !important; /* カラム幅いっぱいに */
+    width: 17% !important; /* カラム幅いっぱいに */
     background: #f1f8e9 !important;
     border: 2px solid #c5e1a5 !important;
     color: #2e7d32 !important;
@@ -600,3 +600,4 @@ elif auth_status == False:
     st.error("❌ ユーザー名またはパスワードが正しくありません")
 elif auth_status == None:
     st.warning("👤 ログインしてゲームを開始してください")
+
